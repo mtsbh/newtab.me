@@ -30,7 +30,7 @@ const messages = defineMessages({
 	},
 	instrumentsHelp: {
 		id: 'widget.technicalanalysis.instrumentsHelp',
-		defaultMessage: "Comma-separated symbols (e.g., XAUUSD,US30,NAS100,BTCUSD,ETHUSD)",
+		defaultMessage: "Comma-separated symbols (e.g., XAUUSD,DJI,NDX,BTC/USD,ETH/USD)",
 	},
 	timeframe: {
 		id: 'widget.technicalanalysis.timeframe',
@@ -342,7 +342,7 @@ function TechnicalAnalysis(props: WidgetProps<TechnicalAnalysisProps>) {
 						• Symbols format might be wrong<br/>
 						• API rate limit reached<br/>
 						<br/>
-						Try: XAUUSD, US30, NAS100, BTCUSD, ETHUSD
+						Try: XAUUSD, DJI, NDX, BTC/USD, ETH/USD
 					</div>
 				)}
 
@@ -408,7 +408,7 @@ const widget: WidgetType<TechnicalAnalysisProps> = {
 	defaultSize: new Vector2(6, 8),
 	initialProps: {
 		apiKey: '',
-		instruments: 'XAUUSD,US30,NAS100,BTCUSD,ETHUSD',
+		instruments: 'XAUUSD,DJI,NDX,BTC/USD,ETH/USD',
 		timeframe: '1h',
 		refreshInterval: 5,
 	},
