@@ -1286,7 +1286,7 @@
     "message": "Instruments"
   },
   "widget.technicalanalysis.instrumentsHelp": {
-    "message": "Comma-separated symbols (e.g., XAUUSD,DJI,NDX,BTC/USD,ETH/USD)"
+    "message": "Comma-separated symbols. Free tier: Crypto, Forex, US stocks (e.g., BTC/USD,ETH/USD,XAU/USD,EUR/USD,AAPL)"
   },
   "widget.technicalanalysis.refreshInterval": {
     "message": "Refresh Interval (minutes)"

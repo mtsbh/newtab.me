@@ -30,7 +30,7 @@ const messages = defineMessages({
 	},
 	instrumentsHelp: {
 		id: 'widget.technicalanalysis.instrumentsHelp',
-		defaultMessage: "Comma-separated symbols (e.g., XAUUSD,DJI,NDX,BTC/USD,ETH/USD)",
+		defaultMessage: "Comma-separated symbols. Free tier: Crypto, Forex, US stocks (e.g., BTC/USD,ETH/USD,XAU/USD,EUR/USD,AAPL)",
 	},
 	timeframe: {
 		id: 'widget.technicalanalysis.timeframe',
@@ -339,10 +339,10 @@ function TechnicalAnalysis(props: WidgetProps<TechnicalAnalysisProps>) {
 					<div style={{ color: '#FFA500' }}>
 						⚠️ No data received. Possible issues:<br/>
 						• API key might be invalid<br/>
-						• Symbols format might be wrong<br/>
+						• Symbols not available in free tier (indices require paid plan)<br/>
 						• API rate limit reached<br/>
 						<br/>
-						Try: XAUUSD, DJI, NDX, BTC/USD, ETH/USD
+						Free tier works: BTC/USD, ETH/USD, XAU/USD, EUR/USD, AAPL
 					</div>
 				)}
 
@@ -408,7 +408,7 @@ const widget: WidgetType<TechnicalAnalysisProps> = {
 	defaultSize: new Vector2(6, 8),
 	initialProps: {
 		apiKey: '',
-		instruments: 'XAUUSD,DJI,NDX,BTC/USD,ETH/USD',
+		instruments: 'BTC/USD,ETH/USD,XAU/USD,EUR/USD,AAPL',
 		timeframe: '1h',
 		refreshInterval: 5,
 	},
