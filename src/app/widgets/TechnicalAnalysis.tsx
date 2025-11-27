@@ -40,6 +40,38 @@ const messages = defineMessages({
 		id: 'widget.technicalanalysis.refreshInterval',
 		defaultMessage: "Refresh Interval (minutes)",
 	},
+	timeframe1min: {
+		id: 'widget.technicalanalysis.timeframe.1min',
+		defaultMessage: "1 Minute",
+	},
+	timeframe5min: {
+		id: 'widget.technicalanalysis.timeframe.5min',
+		defaultMessage: "5 Minutes",
+	},
+	timeframe15min: {
+		id: 'widget.technicalanalysis.timeframe.15min',
+		defaultMessage: "15 Minutes",
+	},
+	timeframe30min: {
+		id: 'widget.technicalanalysis.timeframe.30min',
+		defaultMessage: "30 Minutes",
+	},
+	timeframe1h: {
+		id: 'widget.technicalanalysis.timeframe.1h',
+		defaultMessage: "1 Hour",
+	},
+	timeframe4h: {
+		id: 'widget.technicalanalysis.timeframe.4h',
+		defaultMessage: "4 Hours",
+	},
+	timeframe1day: {
+		id: 'widget.technicalanalysis.timeframe.1day',
+		defaultMessage: "Daily",
+	},
+	timeframe1week: {
+		id: 'widget.technicalanalysis.timeframe.1week',
+		defaultMessage: "Weekly",
+	},
 });
 
 interface Instrument {
@@ -376,16 +408,29 @@ const widget: WidgetType<TechnicalAnalysisProps> = {
 	schema: {
 		apiKey: type.string(messages.apiKey, messages.apiKeyHelp),
 		instruments: type.string(messages.instruments, messages.instrumentsHelp),
-		timeframe: type.select(messages.timeframe, undefined, [
-			{ value: '1min', label: '1 Minute' },
-			{ value: '5min', label: '5 Minutes' },
-			{ value: '15min', label: '15 Minutes' },
-			{ value: '30min', label: '30 Minutes' },
-			{ value: '1h', label: '1 Hour' },
-			{ value: '4h', label: '4 Hours' },
-			{ value: '1day', label: 'Daily' },
-			{ value: '1week', label: 'Weekly' },
-		]),
+		timeframe: type.select(
+			{
+				'1min': '1min',
+				'5min': '5min',
+				'15min': '15min',
+				'30min': '30min',
+				'1h': '1h',
+				'4h': '4h',
+				'1day': '1day',
+				'1week': '1week',
+			},
+			{
+				'1min': messages.timeframe1min,
+				'5min': messages.timeframe5min,
+				'15min': messages.timeframe15min,
+				'30min': messages.timeframe30min,
+				'1h': messages.timeframe1h,
+				'4h': messages.timeframe4h,
+				'1day': messages.timeframe1day,
+				'1week': messages.timeframe1week,
+			},
+			messages.timeframe
+		),
 		refreshInterval: type.number(messages.refreshInterval, undefined, 1, 60),
 	},
 };
