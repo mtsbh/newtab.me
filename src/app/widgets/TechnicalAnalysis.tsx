@@ -214,14 +214,14 @@ function TechnicalAnalysis(props: WidgetProps<TechnicalAnalysisProps>) {
 
 	useEffect(() => {
 		const fetchData = async () => {
-			if (!props.props.apiKey) {
-				setError('Please add your Twelve Data API key in widget settings');
+			if (!props.props.apiKey || props.props.apiKey.trim() === '') {
+				setError('⚠️ Please add your Twelve Data API key in widget settings. Get free key at twelvedata.com');
 				setLoading(false);
 				return;
 			}
 
 			if (symbols.length === 0) {
-				setError('Please add instruments in widget settings');
+				setError('Please add instruments in widget settings (e.g., XAUUSD,US30,NAS100)');
 				setLoading(false);
 				return;
 			}
@@ -336,7 +336,14 @@ function TechnicalAnalysis(props: WidgetProps<TechnicalAnalysisProps>) {
 				{error && <div style={{ color: '#ff6b6b' }}>{error}</div>}
 
 				{!loading && !error && instruments.length === 0 && (
-					<div>No data available. Check your API key and instrument symbols.</div>
+					<div style={{ color: '#FFA500' }}>
+						⚠️ No data received. Possible issues:<br/>
+						• API key might be invalid<br/>
+						• Symbols format might be wrong<br/>
+						• API rate limit reached<br/>
+						<br/>
+						Try: XAUUSD, US30, NAS100, BTCUSD, ETHUSD
+					</div>
 				)}
 
 				{instruments.map((instrument) => (
