@@ -8,21 +8,25 @@ import { defineMessages } from 'react-intl';
 
 const messages = defineMessages({
 	title: {
+		id: 'widget.html.title',
 		defaultMessage: "HTML",
 		description: "HTML Widget",
 	},
 
 	description: {
+		id: 'widget.html.description',
 		defaultMessage: "Custom HTML",
 		description: "HTML widget description",
 	},
 
 	html: {
+		id: 'widget.html.html',
 		defaultMessage: "HTML",
 		description: "HTML widget: form field label",
 	},
 
 	jsEnabled: {
+		id: 'widget.html.jsEnabled',
 		defaultMessage: "JavaScript is now supported. Only use trusted code.",
 		description: "HTML widget: form field description",
 	}
