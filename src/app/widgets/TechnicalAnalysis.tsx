@@ -7,29 +7,37 @@ import { defineMessages } from 'react-intl';
 
 const messages = defineMessages({
 	title: {
+		id: 'widget.technicalanalysis.title',
 		defaultMessage: "Technical Analysis",
 		description: "Technical Analysis Widget",
 	},
 	description: {
+		id: 'widget.technicalanalysis.description',
 		defaultMessage: "Technical indicators and signals for multiple instruments",
 	},
 	apiKey: {
+		id: 'widget.technicalanalysis.apiKey',
 		defaultMessage: "API Key (Twelve Data)",
 		description: "API key for Twelve Data",
 	},
 	apiKeyHelp: {
+		id: 'widget.technicalanalysis.apiKeyHelp',
 		defaultMessage: "Get free API key at twelvedata.com (800 requests/day)",
 	},
 	instruments: {
+		id: 'widget.technicalanalysis.instruments',
 		defaultMessage: "Instruments",
 	},
 	instrumentsHelp: {
+		id: 'widget.technicalanalysis.instrumentsHelp',
 		defaultMessage: "Comma-separated symbols (e.g., XAUUSD,US30,NAS100,BTCUSD,ETHUSD)",
 	},
 	timeframe: {
+		id: 'widget.technicalanalysis.timeframe',
 		defaultMessage: "Timeframe",
 	},
 	refreshInterval: {
+		id: 'widget.technicalanalysis.refreshInterval',
 		defaultMessage: "Refresh Interval (minutes)",
 	},
 });
