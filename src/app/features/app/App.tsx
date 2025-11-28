@@ -21,6 +21,18 @@ import { WidgetManagerContext } from "app/hooks/widgetManagerContext";
 import { LockedContext } from "app/hooks/useIsLocked";
 import { useWorkspaces } from "app/hooks/workspaces";
 import WorkspaceSwitcher from "../workspaces/WorkspaceSwitcher";
+import { createContext } from "react";
+import { Workspace } from "app/Workspace";
+import { Widget } from "app/Widget";
+
+
+export interface WorkspaceActions {
+	workspaces: Workspace[];
+	activeWorkspaceId: string;
+	moveWidgetToWorkspace: (widgetId: number, targetWorkspaceId: string) => Promise<void>;
+}
+
+export const WorkspaceActionsContext = createContext<WorkspaceActions | null>(null);
 
 
 const messages = defineMessages({
@@ -169,11 +181,45 @@ export default function App() {
 		}
 	};
 
+	// Handle moving widget to another workspace
+	const moveWidgetToWorkspace = async (widgetId: number, targetWorkspaceId: string) => {
+		if (!activeWorkspaceId || targetWorkspaceId === activeWorkspaceId) {
+			return;
+		}
+
+		// Find the widget in current workspace
+		const widget = widgetManager.widgets.find(w => w.id === widgetId);
+		if (!widget) {
+			return;
+		}
+
+		// Remove from current workspace
+		const updatedCurrentWidgets = widgetManager.widgets.filter(w => w.id !== widgetId);
+		await updateWorkspaceWidgets(activeWorkspaceId, updatedCurrentWidgets);
+
+		// Add to target workspace
+		const targetWorkspace = workspaces.find(w => w.id === targetWorkspaceId);
+		if (targetWorkspace) {
+			const updatedTargetWidgets = [...targetWorkspace.widgets, widget];
+			await updateWorkspaceWidgets(targetWorkspaceId, updatedTargetWidgets);
+		}
+
+		// Update local widget manager
+		widgetManager.widgets = updatedCurrentWidgets;
+	};
+
+	const workspaceActions: WorkspaceActions = {
+		workspaces,
+		activeWorkspaceId: activeWorkspaceId || "",
+		moveWidgetToWorkspace,
+	};
+
 	return (
 		<IntlProvider locale={(localeMessages && locale) ? locale : "en"} defaultLocale="en" messages={localeMessages ?? undefined}>
 			<LockedContext.Provider value={isLocked}>
 				<WidgetManagerContext.Provider value={widgetManager}>
-					<GlobalSearchContext.Provider value={{ query, setQuery }}>
+					<WorkspaceActionsContext.Provider value={workspaceActions}>
+						<GlobalSearchContext.Provider value={{ query, setQuery }}>
 						<Title />
 						<main className={classes.join(" ")}>
 							{workspacesLoaded && (
@@ -258,6 +304,7 @@ export default function App() {
 								</aside>)}
 						</main>
 					</GlobalSearchContext.Provider>
+					</WorkspaceActionsContext.Provider>
 				</WidgetManagerContext.Provider>
 			</LockedContext.Provider>
 		</IntlProvider>);

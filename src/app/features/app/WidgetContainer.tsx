@@ -1,4 +1,4 @@
-import React, { useState, KeyboardEvent } from "react";
+import React, { useState, KeyboardEvent, useContext } from "react";
 import { getSchemaForWidget, WidgetProps, getThemeSchemaForWidget } from "../../Widget";
 import Modal from "app/components/Modal";
 import { Form } from "app/components/forms";
@@ -9,6 +9,7 @@ import { miscMessages } from "app/locale/common";
 import Button, { ButtonVariant } from "app/components/Button";
 import { SchemaEntry } from "app/utils/Schema";
 import { MyFormattedMessage } from "app/locale/MyMessageDescriptor";
+import { WorkspaceActionsContext } from "./App";
 
 
 interface WidgetDialogProps<T> extends WidgetProps<T> {
@@ -108,10 +109,95 @@ function WidgetDelete<T>(props: WidgetDialogProps<T>) {
 }
 
 
+function WidgetMoveToWorkspace<T>(props: WidgetDialogProps<T>) {
+	const intl = useIntl();
+	const workspaceContext = useContext(WorkspaceActionsContext);
+	const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+	const [isMoving, setIsMoving] = useState(false);
+
+	if (!workspaceContext) {
+		return null;
+	}
+
+	const { workspaces, activeWorkspaceId, moveWidgetToWorkspace } = workspaceContext;
+	const availableWorkspaces = workspaces.filter(w => w.id !== activeWorkspaceId);
+
+	const title = intl.formatMessage(
+		{ defaultMessage: "Move {type} to Workspace" },
+		{ type: intl.formatMessage(props.typeDef.title) });
+
+	const handleMove = async () => {
+		if (!selectedWorkspaceId) {
+			return;
+		}
+
+		setIsMoving(true);
+		try {
+			await moveWidgetToWorkspace(props.id, selectedWorkspaceId);
+			props.onClose();
+		} catch (error) {
+			console.error("Failed to move widget:", error);
+			setIsMoving(false);
+		}
+	};
+
+	return (
+		<Modal title={title} {...props}>
+			<div className="modal-body">
+				<p>
+					<FormattedMessage
+						defaultMessage="Select the workspace to move this widget to:"
+						description="Move widget modal message" />
+				</p>
+				<div className="form-group">
+					{availableWorkspaces.length === 0 ? (
+						<p className="text-muted">
+							<FormattedMessage
+								defaultMessage="No other workspaces available. Create a new workspace first."
+								description="No workspaces available message" />
+						</p>
+					) : (
+						<select
+							className="form-control"
+							value={selectedWorkspaceId || ""}
+							onChange={(e) => setSelectedWorkspaceId(e.target.value)}
+							disabled={isMoving}
+							autoFocus={true}
+						>
+							<option value="">
+								{intl.formatMessage({
+									defaultMessage: "Select workspace...",
+									description: "Workspace selection placeholder"
+								})}
+							</option>
+							{availableWorkspaces.map(workspace => (
+								<option key={workspace.id} value={workspace.id}>
+									{workspace.name}
+								</option>
+							))}
+						</select>
+					)}
+				</div>
+			</div>
+			<div className="modal-footer buttons">
+				<Button variant={ButtonVariant.Secondary} data-cy="cancel"
+					onClick={props.onClose} label={miscMessages.cancel}
+					disabled={isMoving} />
+				<Button variant={ButtonVariant.Primary} autoFocus={false}
+					onClick={handleMove}
+					label={{ defaultMessage: "Move", description: "Move widget button" }}
+					data-cy="move"
+					disabled={!selectedWorkspaceId || isMoving} />
+			</div>
+		</Modal>);
+}
+
+
 enum WidgetMode {
 	View,
 	Edit,
-	Delete
+	Delete,
+	Move
 }
 
 
@@ -125,6 +211,8 @@ export function WidgetContainer<T>(props: WidgetProps<T>) {
 		return (<WidgetEditor onClose={close} {...props} />);
 	case WidgetMode.Delete:
 		return (<WidgetDelete onClose={close} {...props} />);
+	case WidgetMode.Move:
+		return (<WidgetMoveToWorkspace onClose={close} {...props} />);
 	}
 
 	if (typeof browser === "undefined" && props.typeDef.isBrowserOnly === true) {
@@ -183,6 +271,12 @@ export function WidgetContainer<T>(props: WidgetProps<T>) {
 					data-cy="widget-duplicate"
 					icon="fas fa-clone"
 					title={miscMessages.duplicate} />
+
+				<Button variant={ButtonVariant.None}
+					onClick={() => setMode(WidgetMode.Move)}
+					data-cy="widget-move"
+					icon="fas fa-arrow-right"
+					title={{ defaultMessage: "Move to workspace", description: "Move widget to another workspace" }} />
 
 				<Button variant={ButtonVariant.None}
 					className="btn widget-edit"
