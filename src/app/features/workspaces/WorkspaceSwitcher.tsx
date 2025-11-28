@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Workspace } from "../../Workspace";
 import { mergeClasses } from "../../utils";
 import "./WorkspaceSwitcher.css";
@@ -14,6 +14,7 @@ interface WorkspaceSwitcherProps {
 }
 
 export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
+	const [isOpen, setIsOpen] = useState(false);
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [editName, setEditName] = useState("");
 
@@ -37,10 +38,38 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 		}
 	};
 
+	// Keyboard shortcut: Ctrl+Shift+W to toggle
+	useEffect(() => {
+		const handleGlobalKeyDown = (e: KeyboardEvent) => {
+			if (e.ctrlKey && e.shiftKey && e.key === "W") {
+				e.preventDefault();
+				setIsOpen(prev => !prev);
+			}
+		};
+		window.addEventListener("keydown", handleGlobalKeyDown);
+		return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+	}, []);
+
+	const activeWorkspace = props.workspaces.find(w => w.id === props.activeWorkspaceId);
+
 	return (
-		<div className={mergeClasses("workspace-switcher", !props.isLocked && "unlocked")}>
-			<div className="workspace-tabs">
-				{props.workspaces.map(workspace => (
+		<div className="workspace-switcher">
+			<button
+				className="workspace-toggle-btn"
+				onClick={() => setIsOpen(!isOpen)}
+				title="Switch workspace (Ctrl+Shift+W)"
+			>
+				<i className="fas fa-layer-group"></i>
+				<span className="workspace-current-name">{activeWorkspace?.name || "Main"}</span>
+				<i className={mergeClasses("fas fa-chevron-down", isOpen && "rotate")}></i>
+			</button>
+
+			{isOpen && (
+				<>
+					<div className="workspace-overlay" onClick={() => setIsOpen(false)} />
+					<div className={mergeClasses("workspace-panel", !props.isLocked && "unlocked")}>
+						<div className="workspace-tabs">
+							{props.workspaces.map(workspace => (
 					<div
 						key={workspace.id}
 						className={mergeClasses(
@@ -62,7 +91,10 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 							<>
 								<button
 									className="workspace-tab-button"
-									onClick={() => props.onSwitch(workspace.id)}
+									onClick={() => {
+										props.onSwitch(workspace.id);
+										setIsOpen(false);
+									}}
 									title={workspace.name}
 								>
 									{workspace.name}
@@ -91,20 +123,23 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 										)}
 									</div>
 								)}
-							</>
-						)}
-					</div>
-				))}
-				{!props.isLocked && (
-					<button
-						className="workspace-tab workspace-add-btn"
-						onClick={props.onCreateWorkspace}
-						title="Create new workspace"
-					>
-						+
-					</button>
-				)}
+								</>
+							)}
+						</div>
+					))}
+					{!props.isLocked && (
+						<button
+							className="workspace-tab workspace-add-btn"
+							onClick={props.onCreateWorkspace}
+							title="Create new workspace"
+						>
+							+ New Workspace
+						</button>
+					)}
+				</div>
 			</div>
+				</>
+			)}
 		</div>
 	);
 }
