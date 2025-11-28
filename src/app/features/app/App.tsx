@@ -74,7 +74,8 @@ export default function App() {
 
 		const loadWidgets = async () => {
 			// Manually set widgets from workspace instead of calling widgetManager.load()
-			widgetManager.widgets = activeWorkspace.widgets || [];
+			// Create a copy of the widgets array to avoid shared references
+			widgetManager.widgets = [...(activeWorkspace.widgets || [])];
 
 			// Initialize widgets (same as WidgetManager.load() does)
 			for (const widget of widgetManager.widgets) {
@@ -87,7 +88,7 @@ export default function App() {
 
 		setWidgetsLoaded(false);
 		loadWidgets();
-	}, [activeWorkspaceId, workspacesLoaded, widgetManager]);
+	}, [activeWorkspaceId, activeWorkspace, workspacesLoaded, widgetManager]);
 
 	// Override widget manager's save to save to workspace
 	useEffect(() => {
@@ -97,8 +98,10 @@ export default function App() {
 
 		const originalSave = widgetManager.save.bind(widgetManager);
 		widgetManager.save = () => {
+			// Get current workspace ID to avoid stale closure
+			const currentWorkspaceId = activeWorkspaceId;
 			// Save to workspace instead of storage
-			updateWorkspaceWidgets(activeWorkspaceId, widgetManager.widgets);
+			updateWorkspaceWidgets(currentWorkspaceId, [...widgetManager.widgets]);
 			// Still call original save for any other side effects
 			// originalSave();
 		};
