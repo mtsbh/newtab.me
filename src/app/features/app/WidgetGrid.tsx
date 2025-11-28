@@ -78,7 +78,6 @@ const ReactGridLayout = WidthProvider(GridLayout);
 export default function WidgetGrid(props: WidgetGridProps) {
 	const widgetManager = props.wm;
 	const [gridClassNames, setGridClassNames] = useState("layout");
-	const [, setRenderTrigger] = useState(0);
 	const gridColumns = props.columns;
 	const cellSize = 50;
 	const cellSpacing = props.spacing;
@@ -92,7 +91,6 @@ export default function WidgetGrid(props: WidgetGridProps) {
 
 	function handleRemove(id: number) {
 		widgetManager.removeWidget(id);
-		setRenderTrigger(v => v + 1);
 	}
 
 
@@ -126,7 +124,6 @@ export default function WidgetGrid(props: WidgetGridProps) {
 			remove: () => handleRemove(widget.id),
 			duplicate: () => {
 				widgetManager.clone(widget);
-				setRenderTrigger(v => v + 1);
 			},
 		};
 
@@ -146,16 +143,20 @@ export default function WidgetGrid(props: WidgetGridProps) {
 		const lut = new Map<string, Layout>();
 		layouts.forEach(layout => lut.set(layout.i, layout));
 
-		widgetManager.widgets.forEach(widget => {
+		// Create new array with updated widgets instead of mutating
+		widgetManager.widgets = widgetManager.widgets.map(widget => {
 			const layout = lut.get(widget.id.toString());
 			if (layout) {
-				widget.position = new Vector2(layout.x, layout.y);
-				widget.size = new Vector2(layout.w, layout.h);
+				return {
+					...widget,
+					position: new Vector2(layout.x, layout.y),
+					size: new Vector2(layout.w, layout.h),
+				};
 			}
+			return widget;
 		});
 
 		widgetManager.save();
-		setRenderTrigger(v => v + 1);
 	}
 
 	const wrapStyle: CSSProperties = {
