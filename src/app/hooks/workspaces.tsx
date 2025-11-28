@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { storage } from "../storage";
 import { Workspace, createWorkspace } from "../Workspace";
 import { Widget } from "../Widget";
@@ -42,84 +42,106 @@ export function useWorkspaces() {
 		load();
 	}, []);
 
-	// Save workspaces to storage
-	const saveWorkspaces = async (newWorkspaces: Workspace[]) => {
+	// Save workspaces to storage - memoized to prevent recreation
+	const saveWorkspaces = useCallback(async (newWorkspaces: Workspace[]) => {
 		await storage.set(WORKSPACES_KEY, newWorkspaces);
 		setWorkspacesState(newWorkspaces);
-	};
+	}, []);
 
 	// Get active workspace
 	const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId) || workspaces[0];
 
-	// Switch to a different workspace
-	const switchWorkspace = async (workspaceId: string) => {
+	// Switch to a different workspace - memoized
+	const switchWorkspace = useCallback(async (workspaceId: string) => {
 		await storage.set(ACTIVE_WORKSPACE_KEY, workspaceId);
 		setActiveWorkspaceIdState(workspaceId);
-	};
+	}, []);
 
-	// Create a new workspace
-	const createNewWorkspace = async (name: string) => {
+	// Create a new workspace - memoized with functional update
+	const createNewWorkspace = useCallback(async (name: string) => {
 		const newWorkspace = createWorkspace(name);
-		const newWorkspaces = [...workspaces, newWorkspace];
-		await saveWorkspaces(newWorkspaces);
+
+		// Use functional state update to avoid dependency on workspaces
+		setWorkspacesState(prevWorkspaces => {
+			const newWorkspaces = [...prevWorkspaces, newWorkspace];
+			storage.set(WORKSPACES_KEY, newWorkspaces);
+			return newWorkspaces;
+		});
+
 		await switchWorkspace(newWorkspace.id);
 		return newWorkspace;
-	};
+	}, [switchWorkspace]);
 
-	// Rename a workspace
-	const renameWorkspace = async (workspaceId: string, newName: string) => {
-		const newWorkspaces = workspaces.map(w =>
-			w.id === workspaceId
-				? { ...w, name: newName, updatedAt: new Date() }
-				: w
-		);
-		await saveWorkspaces(newWorkspaces);
-	};
+	// Rename a workspace - memoized with functional update
+	const renameWorkspace = useCallback(async (workspaceId: string, newName: string) => {
+		setWorkspacesState(prevWorkspaces => {
+			const newWorkspaces = prevWorkspaces.map(w =>
+				w.id === workspaceId
+					? { ...w, name: newName, updatedAt: new Date() }
+					: w
+			);
+			storage.set(WORKSPACES_KEY, newWorkspaces);
+			return newWorkspaces;
+		});
+	}, []);
 
-	// Delete a workspace
-	const deleteWorkspace = async (workspaceId: string) => {
-		if (workspaces.length <= 1) {
-			throw new Error("Cannot delete the last workspace");
-		}
+	// Delete a workspace - memoized with functional update
+	const deleteWorkspace = useCallback(async (workspaceId: string) => {
+		setWorkspacesState(prevWorkspaces => {
+			if (prevWorkspaces.length <= 1) {
+				throw new Error("Cannot delete the last workspace");
+			}
 
-		const newWorkspaces = workspaces.filter(w => w.id !== workspaceId);
-		await saveWorkspaces(newWorkspaces);
+			const newWorkspaces = prevWorkspaces.filter(w => w.id !== workspaceId);
+			storage.set(WORKSPACES_KEY, newWorkspaces);
 
-		// If deleting active workspace, switch to first workspace
-		if (activeWorkspaceId === workspaceId) {
-			await switchWorkspace(newWorkspaces[0].id);
-		}
-	};
+			// If deleting active workspace, switch to first workspace
+			if (activeWorkspaceId === workspaceId) {
+				switchWorkspace(newWorkspaces[0].id);
+			}
 
-	// Update workspace widgets
-	const updateWorkspaceWidgets = async (workspaceId: string, widgets: Widget<any>[]) => {
-		const newWorkspaces = workspaces.map(w =>
-			w.id === workspaceId
-				? { ...w, widgets, updatedAt: new Date() }
-				: w
-		);
-		await saveWorkspaces(newWorkspaces);
-	};
+			return newWorkspaces;
+		});
+	}, [activeWorkspaceId, switchWorkspace]);
 
-	// Update workspace background
-	const updateWorkspaceBackground = async (workspaceId: string, background: BackgroundConfig) => {
-		const newWorkspaces = workspaces.map(w =>
-			w.id === workspaceId
-				? { ...w, background, updatedAt: new Date() }
-				: w
-		);
-		await saveWorkspaces(newWorkspaces);
-	};
+	// Update workspace widgets - memoized with functional update
+	const updateWorkspaceWidgets = useCallback(async (workspaceId: string, widgets: Widget<any>[]) => {
+		setWorkspacesState(prevWorkspaces => {
+			const newWorkspaces = prevWorkspaces.map(w =>
+				w.id === workspaceId
+					? { ...w, widgets, updatedAt: new Date() }
+					: w
+			);
+			storage.set(WORKSPACES_KEY, newWorkspaces);
+			return newWorkspaces;
+		});
+	}, []);
 
-	// Update workspace grid settings
-	const updateWorkspaceGridSettings = async (workspaceId: string, gridSettings: WidgetGridSettings) => {
-		const newWorkspaces = workspaces.map(w =>
-			w.id === workspaceId
-				? { ...w, gridSettings, updatedAt: new Date() }
-				: w
-		);
-		await saveWorkspaces(newWorkspaces);
-	};
+	// Update workspace background - memoized with functional update
+	const updateWorkspaceBackground = useCallback(async (workspaceId: string, background: BackgroundConfig) => {
+		setWorkspacesState(prevWorkspaces => {
+			const newWorkspaces = prevWorkspaces.map(w =>
+				w.id === workspaceId
+					? { ...w, background, updatedAt: new Date() }
+					: w
+			);
+			storage.set(WORKSPACES_KEY, newWorkspaces);
+			return newWorkspaces;
+		});
+	}, []);
+
+	// Update workspace grid settings - memoized with functional update
+	const updateWorkspaceGridSettings = useCallback(async (workspaceId: string, gridSettings: WidgetGridSettings) => {
+		setWorkspacesState(prevWorkspaces => {
+			const newWorkspaces = prevWorkspaces.map(w =>
+				w.id === workspaceId
+					? { ...w, gridSettings, updatedAt: new Date() }
+					: w
+			);
+			storage.set(WORKSPACES_KEY, newWorkspaces);
+			return newWorkspaces;
+		});
+	}, []);
 
 	return {
 		workspaces,

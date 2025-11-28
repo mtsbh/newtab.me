@@ -18,7 +18,8 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [editName, setEditName] = useState("");
 
-	const handleStartRename = (workspace: Workspace) => {
+	const handleStartRename = (workspace: Workspace, e: React.MouseEvent) => {
+		e.stopPropagation();
 		setEditingId(workspace.id);
 		setEditName(workspace.name);
 	};
@@ -35,6 +36,13 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 			handleFinishRename();
 		} else if (e.key === "Escape") {
 			setEditingId(null);
+		}
+	};
+
+	const handleDeleteWorkspace = (workspace: Workspace, e: React.MouseEvent) => {
+		e.stopPropagation();
+		if (confirm(`Delete workspace "${workspace.name}"?\n\nAll widgets in this workspace will be permanently removed.`)) {
+			props.onDeleteWorkspace(workspace.id);
 		}
 	};
 
@@ -57,87 +65,112 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 			<button
 				className="workspace-toggle-btn"
 				onClick={() => setIsOpen(!isOpen)}
-				title="Switch workspace (Ctrl+Shift+W)"
+				title={`Switch workspace (Ctrl+Shift+W)\nCurrent: ${activeWorkspace?.name || "Main"}`}
 			>
 				<i className="fas fa-layer-group"></i>
 				<span className="workspace-current-name">{activeWorkspace?.name || "Main"}</span>
-				<i className={mergeClasses("fas fa-chevron-down", isOpen && "rotate")}></i>
+				<span className="workspace-count">{props.workspaces.length}</span>
+				<i className={mergeClasses("fas fa-chevron-down workspace-chevron", isOpen && "rotate")}></i>
 			</button>
 
 			{isOpen && (
 				<>
 					<div className="workspace-overlay" onClick={() => setIsOpen(false)} />
 					<div className={mergeClasses("workspace-panel", !props.isLocked && "unlocked")}>
-						<div className="workspace-tabs">
-							{props.workspaces.map(workspace => (
-					<div
-						key={workspace.id}
-						className={mergeClasses(
-							"workspace-tab",
-							workspace.id === props.activeWorkspaceId && "active"
-						)}
-					>
-						{editingId === workspace.id ? (
-							<input
-								type="text"
-								value={editName}
-								onChange={(e) => setEditName(e.target.value)}
-								onBlur={handleFinishRename}
-								onKeyDown={handleKeyDown}
-								autoFocus
-								className="workspace-tab-input"
-							/>
-						) : (
-							<>
+						<div className="workspace-panel-header">
+							<h3>
+								<i className="fas fa-layer-group"></i>
+								Workspaces
+							</h3>
+							{!props.isLocked && (
 								<button
-									className="workspace-tab-button"
+									className="workspace-add-btn-header"
 									onClick={() => {
-										props.onSwitch(workspace.id);
+										props.onCreateWorkspace();
 										setIsOpen(false);
 									}}
-									title={workspace.name}
+									title="Create new workspace"
 								>
-									{workspace.name}
+									<i className="fas fa-plus"></i>
 								</button>
-								{!props.isLocked && (
-									<div className="workspace-tab-actions">
-										<button
-											className="workspace-action-btn"
-											onClick={() => handleStartRename(workspace)}
-											title="Rename workspace"
-										>
-											✏️
-										</button>
-										{props.workspaces.length > 1 && (
-											<button
-												className="workspace-action-btn delete"
-												onClick={() => {
-													if (confirm(`Delete workspace "${workspace.name}"?`)) {
-														props.onDeleteWorkspace(workspace.id);
-													}
-												}}
-												title="Delete workspace"
-											>
-												🗑️
-											</button>
-										)}
-									</div>
-								)}
-								</>
 							)}
 						</div>
-					))}
-					{!props.isLocked && (
-						<button
-							className="workspace-tab workspace-add-btn"
-							onClick={props.onCreateWorkspace}
-							title="Create new workspace"
-						>
-							+ New Workspace
-						</button>
-					)}
-				</div>
-			</div>
+						<div className="workspace-tabs">
+							{props.workspaces.map(workspace => (
+								<div
+									key={workspace.id}
+									className={mergeClasses(
+										"workspace-tab",
+										workspace.id === props.activeWorkspaceId && "active"
+									)}
+								>
+									{editingId === workspace.id ? (
+										<input
+											type="text"
+											value={editName}
+											onChange={(e) => setEditName(e.target.value)}
+											onBlur={handleFinishRename}
+											onKeyDown={handleKeyDown}
+											autoFocus
+											className="workspace-tab-input"
+										/>
+									) : (
+										<>
+											<button
+												className="workspace-tab-button"
+												onClick={() => {
+													props.onSwitch(workspace.id);
+													setIsOpen(false);
+												}}
+												title={workspace.name}
+											>
+												<i className="fas fa-folder workspace-tab-icon"></i>
+												<span className="workspace-tab-name">{workspace.name}</span>
+												{workspace.id === props.activeWorkspaceId && (
+													<span className="workspace-active-badge">
+														<i className="fas fa-check"></i>
+													</span>
+												)}
+											</button>
+											{!props.isLocked && (
+												<div className="workspace-tab-actions">
+													<button
+														className="workspace-action-btn rename"
+														onClick={(e) => handleStartRename(workspace, e)}
+														title="Rename workspace"
+													>
+														<i className="fas fa-edit"></i>
+													</button>
+													{props.workspaces.length > 1 && (
+														<button
+															className="workspace-action-btn delete"
+															onClick={(e) => handleDeleteWorkspace(workspace, e)}
+															title="Delete workspace"
+														>
+															<i className="fas fa-trash"></i>
+														</button>
+													)}
+												</div>
+											)}
+										</>
+									)}
+								</div>
+							))}
+						</div>
+						{!props.isLocked && (
+							<button
+								className="workspace-add-btn-footer"
+								onClick={() => {
+									props.onCreateWorkspace();
+									setIsOpen(false);
+								}}
+								title="Create new workspace"
+							>
+								<i className="fas fa-plus-circle"></i>
+								<span>New Workspace</span>
+							</button>
+						)}
+					</div>
 				</>
 			)}
 		</div>

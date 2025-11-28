@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useState } from "react";
+import React, { CSSProperties, useEffect, useState, useMemo } from "react";
 import { WidgetContainer } from "./WidgetContainer";
 import { WidgetManager } from "app/WidgetManager";
 import { WidgetTypes } from "app/widgets";
@@ -6,7 +6,6 @@ import { ErrorBoundary } from "app/components/ErrorView";
 import WidgetLayouter from "app/WidgetLayouter";
 import { Vector2 } from "app/utils/Vector2";
 import GridLayout, { Layout, WidthProvider } from "react-grid-layout";
-import { useForceUpdate } from "app/hooks";
 import { WidgetProps } from "app/Widget";
 import Schema, { type } from "app/utils/Schema";
 import { defineMessages } from "react-intl";
@@ -79,7 +78,6 @@ const ReactGridLayout = WidthProvider(GridLayout);
 export default function WidgetGrid(props: WidgetGridProps) {
 	const widgetManager = props.wm;
 	const [gridClassNames, setGridClassNames] = useState("layout");
-	const forceUpdate = useForceUpdate();
 	const gridColumns = props.columns;
 	const cellSize = 50;
 	const cellSpacing = props.spacing;
@@ -93,19 +91,32 @@ export default function WidgetGrid(props: WidgetGridProps) {
 
 	function handleRemove(id: number) {
 		widgetManager.removeWidget(id);
-		forceUpdate();
 	}
 
 
-	const layouter = new WidgetLayouter(new Vector2(gridColumns, maxRows ?? 0));
-	layouter.resolveAll(widgetManager.widgets);
+	// Memoize layout processing to avoid recreating on every render
+	const { sortedWidgets, layout } = useMemo(() => {
+		const layouter = new WidgetLayouter(new Vector2(gridColumns, maxRows ?? 0));
+		layouter.resolveAll(widgetManager.widgets);
 
-	// Sort widgets to allow predictable focus order
-	widgetManager.widgets.sort((a, b) =>
-		(a.position!.x + 100 * a.position!.y) -
-		(b.position!.x + 100 * b.position!.y));
+		// Sort widgets to allow predictable focus order
+		const sorted = [...widgetManager.widgets].sort((a, b) =>
+			(a.position!.x + 100 * a.position!.y) -
+			(b.position!.x + 100 * b.position!.y));
 
-	const widgets = widgetManager.widgets.map(widget => {
+		const layout : Layout[] = sorted.map(widget => ({
+			i: widget.id.toString(),
+			x: widget.position?.x ?? 0,
+			y: widget.position?.y ?? 0,
+			w: widget.size.x,
+			h: widget.size.y,
+		}));
+
+		return { sortedWidgets: sorted, layout };
+	}, [widgetManager.widgets, gridColumns, maxRows]);
+
+	// Memoize widgets to prevent unnecessary re-renders
+	const widgets = useMemo(() => sortedWidgets.map(widget => {
 		const props : WidgetProps<unknown> = {
 			...widget,
 			typeDef: WidgetTypes[widget.type],
@@ -113,7 +124,6 @@ export default function WidgetGrid(props: WidgetGridProps) {
 			remove: () => handleRemove(widget.id),
 			duplicate: () => {
 				widgetManager.clone(widget);
-				forceUpdate();
 			},
 		};
 
@@ -127,30 +137,26 @@ export default function WidgetGrid(props: WidgetGridProps) {
 					<WidgetContainer {...props} />
 				</ErrorBoundary>
 			</div>);
-	});
-
-	const layout : Layout[] = widgetManager.widgets.map(widget => ({
-		i: widget.id.toString(),
-		x: widget.position?.x ?? 0,
-		y: widget.position?.y ?? 0,
-		w: widget.size.x,
-		h: widget.size.y,
-	}));
+	}), [sortedWidgets, widgetManager]);
 
 	function onLayoutChange(layouts: Layout[]) {
 		const lut = new Map<string, Layout>();
 		layouts.forEach(layout => lut.set(layout.i, layout));
 
-		widgetManager.widgets.forEach(widget => {
+		// Create new array with updated widgets instead of mutating
+		widgetManager.widgets = widgetManager.widgets.map(widget => {
 			const layout = lut.get(widget.id.toString());
 			if (layout) {
-				widget.position = new Vector2(layout.x, layout.y);
-				widget.size = new Vector2(layout.w, layout.h);
+				return {
+					...widget,
+					position: new Vector2(layout.x, layout.y),
+					size: new Vector2(layout.w, layout.h),
+				};
 			}
+			return widget;
 		});
 
 		widgetManager.save();
-		forceUpdate();
 	}
 
 	const wrapStyle: CSSProperties = {
