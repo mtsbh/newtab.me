@@ -203,8 +203,10 @@ export default function App() {
 		// Create a deep copy of the widget to prevent mirroring between workspaces
 		const widgetCopy = deepCopy(widget);
 
-		// Remove from current workspace
+		// Remove from current workspace and update local widget manager immediately
+		// to prevent the widget from being saved back to the current workspace
 		const updatedCurrentWidgets = widgetManager.widgets.filter(w => w.id !== widgetId);
+		widgetManager.widgets = updatedCurrentWidgets;
 		await updateWorkspaceWidgets(activeWorkspaceId, updatedCurrentWidgets);
 
 		// Add the copied widget to target workspace
@@ -213,9 +215,6 @@ export default function App() {
 			const updatedTargetWidgets = [...targetWorkspace.widgets, widgetCopy];
 			await updateWorkspaceWidgets(targetWorkspaceId, updatedTargetWidgets);
 		}
-
-		// Update local widget manager
-		widgetManager.widgets = updatedCurrentWidgets;
 	};
 
 	const workspaceActions: WorkspaceActions = {
