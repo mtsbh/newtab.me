@@ -54,7 +54,6 @@ export function makeKeyCache<R>(func: AnyFunc<R>, timeout: number,
 
 	return (...args: any[]) => {
 		const key = getKey(...args);
-		console.log(`key is ${key}`);
 		if (cache.has(key)) {
 			return cache.get(key)!;
 		}

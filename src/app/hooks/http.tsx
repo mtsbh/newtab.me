@@ -33,7 +33,6 @@ const messages = defineMessages({
 
 function makeProxy(url: string) {
 	if (typeof browser !== 'undefined') {
-		console.log("Detected running as webext");
 		return url;
 	} else {
 		const ret = new URL(config.PROXY_URL);
@@ -66,7 +65,6 @@ async function fetchText(url: string) {
 	}));
 
 	if (!response.ok) {
-		console.error(response);
 		throw new UserError(response.statusText ?? `Error ${response.status}`);
 	}
 

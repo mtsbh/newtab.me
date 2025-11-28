@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import UserError from "../utils/UserError";
 
 /**
  * Runs promise and makes cancellable
@@ -19,7 +20,10 @@ export function useRunPromise<T>(func: () => Promise<T>,
 				then(value);
 			}
 		}).catch((reason) => {
-			console.error(reason);
+			// Only log non-UserError exceptions (UserErrors are expected user-facing errors)
+			if (!(reason instanceof UserError)) {
+				console.error(reason);
+			}
 			if (!cancelled) {
 				reject(reason);
 			}

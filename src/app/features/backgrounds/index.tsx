@@ -37,7 +37,6 @@ async function loadFromCache(key: string, provider: BackgroundProvider<any>): Pr
 	if (cached.key == key) {
 		return cached;
 	} else {
-		console.log("Clearing background cache due to changed key");
 		cacheStorage.remove("bg");
 		return undefined;
 	}
@@ -63,7 +62,6 @@ function isNotExpired(fetchedAt: Date, expiry: CacheExpiry) {
 async function updateBackground<T>(key: string, provider: BackgroundProvider<T>, values: T): Promise<ActualBackgroundProps | undefined> {
 	const retval = await provider.get(values);
 	if (retval && provider.enableCaching) {
-		console.log("Filling background cache from provider");
 		const toCache: BackgroundCache = {
 			key,
 			value: retval,
@@ -82,16 +80,13 @@ async function loadBackground(provider: BackgroundProvider<any>,
 	const key = `${provider.id}:${JSON.stringify(toTypedJSON(values))}`;
 	const cache = await loadFromCache(key, provider);
 	if (cache && values.cacheExpiry && isNotExpired(cache.fetchedAt, values.cacheExpiry ?? CacheExpiry.Hourly)) {
-		console.log("Setting background from cache");
 		return cache.value;
 	}
 
 	if (cache) {
-		console.log("Setting background from cache, updating in the background");
 		updateBackground(key, provider, values).catch(console.error);
 		return cache.value;
 	} else {
-		console.log("Setting background from provider");
 		return await updateBackground(key, provider, values);
 	}
 }

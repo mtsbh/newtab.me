@@ -18,7 +18,6 @@ class WebExtStorage implements IStorage {
 	constructor(private readonly store: browser.storage.StorageArea) {}
 
 	async getAll(): Promise<{ [key: string]: any }> {
-		console.log(`[Storage] Get All`);
 		return fromTypedJSON(await this.store.get()) ?? {};
 	}
 
@@ -31,20 +30,17 @@ class WebExtStorage implements IStorage {
 			return null;
 		}
 
-		console.log(`[Storage] Get ${key}`);
 		const ret = fromTypedJSON(await this.store.get(key));
 		return ret ? ret[key] : null;
 	}
 
 	async set<T>(key: string, value: T): Promise<void> {
-		console.log(`[Storage] Set ${key}`);
 		await this.store.set({
 			[key]: toTypedJSON(value)
 		});
 	}
 
 	async remove(key: string): Promise<void> {
-		console.log(`[Storage] Remove ${key}`);
 		await this.store.remove(key);
 	}
 
@@ -56,7 +52,6 @@ class WebExtStorage implements IStorage {
 
 class LocalStorage implements IStorage {
 	async getAll(): Promise<{ [key: string]: any }> {
-		console.log(`[Storage] Get All`);
 		const ret: { [key: string]: any } = {};
 		for (let i = 0; i < window.localStorage.length; i++) {
 			const key = window.localStorage.key(i);
@@ -84,14 +79,11 @@ class LocalStorage implements IStorage {
 			return null;
 		}
 
-		console.log(`[Storage] Get ${key}`);
 		const json = window.localStorage.getItem(key);
 		return json ? fromTypedJSON(JSON.parse(json)) : null;
 	}
 
 	async set<T>(key: string, value: T): Promise<void> {
-		console.log(`[Storage] Set ${key}`);
-
 		const json = JSON.stringify(toTypedJSON(value));
 		window.localStorage.setItem(key, json);
 	}

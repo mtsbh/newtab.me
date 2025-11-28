@@ -246,13 +246,11 @@ function TechnicalAnalysis(props: WidgetProps<TechnicalAnalysisProps>) {
 						const data = await response.json();
 
 						if (data.status === 'error') {
-							console.error(`Error for ${symbol}:`, data.message);
-							continue;
+								continue;
 						}
 
 						if (!data.values || data.values.length === 0) {
-							console.error(`No data for ${symbol}`);
-							continue;
+								continue;
 						}
 
 						// Extract prices
@@ -294,7 +292,7 @@ function TechnicalAnalysis(props: WidgetProps<TechnicalAnalysisProps>) {
 							},
 						});
 					} catch (err) {
-						console.error(`Error fetching ${symbol}:`, err);
+						// Silently skip failed symbols
 					}
 				}
 
