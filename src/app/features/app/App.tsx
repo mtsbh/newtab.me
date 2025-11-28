@@ -37,10 +37,12 @@ export const WorkspaceActionsContext = createContext<WorkspaceActions | null>(nu
 
 const messages = defineMessages({
 	newTab: {
+		id: "app.newTab",
 		defaultMessage: "New Tab",
 	},
 
 	unlockWidgets: {
+		id: "app.unlockWidgets",
 		defaultMessage: "Enter edit mode",
 		description: "Button to enter edit mode",
 	},
@@ -275,6 +277,7 @@ export default function App() {
 										icon="fa fa-question" small={true}
 										target="_blank"
 										label={defineMessage({
+											id: "app.help",
 											defaultMessage: "Help",
 										})} />
 
@@ -285,6 +288,7 @@ export default function App() {
 										icon="fa fa-plus" small={true}
 										id="add-widget"
 										label={defineMessage({
+											id: "app.addWidget",
 											defaultMessage: "Add Widget",
 										})} />
 
@@ -293,6 +297,7 @@ export default function App() {
 										icon="fa fa-cog" small={true}
 										id="open-settings"
 										label={defineMessage({
+											id: "app.settings",
 											defaultMessage: "Settings",
 										})} />
 

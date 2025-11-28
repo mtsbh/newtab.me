@@ -24,7 +24,7 @@ function WidgetEditor<T>(props: WidgetDialogProps<T>) {
 	const forceUpdate = () => setForce({});
 
 	const title = intl.formatMessage(
-		{ defaultMessage: "Edit {type}" },
+		{ id: "widget.edit.title", defaultMessage: "Edit {type}" },
 		{ type: intl.formatMessage(props.typeDef.title) });
 
 	const [schema, error] = usePromise(() => getSchemaForWidget(props, props.typeDef, intl),
@@ -69,6 +69,7 @@ function WidgetEditor<T>(props: WidgetDialogProps<T>) {
 
 				<h2 className="mt-6">
 					<FormattedMessage
+						id="widget.edit.styling"
 						defaultMessage="Styling"
 						description="Subheading for per-widget styling properties" />
 				</h2>
@@ -89,12 +90,13 @@ function WidgetEditor<T>(props: WidgetDialogProps<T>) {
 function WidgetDelete<T>(props: WidgetDialogProps<T>) {
 	const intl = useIntl();
 	const title = intl.formatMessage(
-			{ defaultMessage: "Remove {type}" },
+			{ id: "widget.delete.title", defaultMessage: "Remove {type}" },
 			{ type: intl.formatMessage(props.typeDef.title) });
 	return (
 		<Modal title={title} {...props}>
 			<div className="modal-body">
 				<FormattedMessage
+					id="widget.delete.confirm"
 					defaultMessage="Are you sure you want to permanently remove this widget?"
 					description="Delete widget modal message" />
 			</div>
@@ -123,7 +125,7 @@ function WidgetMoveToWorkspace<T>(props: WidgetDialogProps<T>) {
 	const availableWorkspaces = workspaces.filter(w => w.id !== activeWorkspaceId);
 
 	const title = intl.formatMessage(
-		{ defaultMessage: "Move {type} to Workspace" },
+		{ id: "widget.move.title", defaultMessage: "Move {type} to Workspace" },
 		{ type: intl.formatMessage(props.typeDef.title) });
 
 	const handleMove = async () => {
@@ -146,6 +148,7 @@ function WidgetMoveToWorkspace<T>(props: WidgetDialogProps<T>) {
 			<div className="modal-body">
 				<p>
 					<FormattedMessage
+						id="widget.move.select"
 						defaultMessage="Select the workspace to move this widget to:"
 						description="Move widget modal message" />
 				</p>
@@ -153,6 +156,7 @@ function WidgetMoveToWorkspace<T>(props: WidgetDialogProps<T>) {
 					{availableWorkspaces.length === 0 ? (
 						<p className="text-muted">
 							<FormattedMessage
+								id="widget.move.noWorkspaces"
 								defaultMessage="No other workspaces available. Create a new workspace first."
 								description="No workspaces available message" />
 						</p>
@@ -166,6 +170,7 @@ function WidgetMoveToWorkspace<T>(props: WidgetDialogProps<T>) {
 						>
 							<option value="">
 								{intl.formatMessage({
+									id: "widget.move.selectPlaceholder",
 									defaultMessage: "Select workspace...",
 									description: "Workspace selection placeholder"
 								})}
@@ -185,7 +190,7 @@ function WidgetMoveToWorkspace<T>(props: WidgetDialogProps<T>) {
 					disabled={isMoving} />
 				<Button variant={ButtonVariant.Primary} autoFocus={false}
 					onClick={handleMove}
-					label={{ defaultMessage: "Move", description: "Move widget button" }}
+					label={{ id: "widget.move.button", defaultMessage: "Move", description: "Move widget button" }}
 					data-cy="move"
 					disabled={!selectedWorkspaceId || isMoving} />
 			</div>
@@ -230,6 +235,7 @@ export function WidgetContainer<T>(props: WidgetProps<T>) {
 				</div>
 				<div className="panel text-muted">
 					<FormattedMessage
+							id="widget.browserOnly"
 							defaultMessage="This widget requires the browser extension version." />
 				</div>
 			</>);
@@ -276,7 +282,7 @@ export function WidgetContainer<T>(props: WidgetProps<T>) {
 					onClick={() => setMode(WidgetMode.Move)}
 					data-cy="widget-move"
 					icon="fas fa-arrow-right"
-					title={{ defaultMessage: "Move to workspace", description: "Move widget to another workspace" }} />
+					title={{ id: "widget.move.tooltip", defaultMessage: "Move to workspace", description: "Move widget to another workspace" }} />
 
 				<Button variant={ButtonVariant.None}
 					className="btn widget-edit"
