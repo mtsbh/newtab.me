@@ -81,6 +81,7 @@ export default function App() {
 	const [widgetsLoaded, setWidgetsLoaded] = useState(false);
 	useEffect(() => {
 		if (!workspacesLoaded || !activeWorkspace) {
+			setWidgetsLoaded(false);
 			return;
 		}
 
@@ -100,7 +101,7 @@ export default function App() {
 
 		setWidgetsLoaded(false);
 		loadWidgets();
-	}, [activeWorkspaceId, activeWorkspace, workspacesLoaded, widgetManager]);
+	}, [activeWorkspaceId, workspacesLoaded]);
 
 	// Override widget manager's save to save to workspace
 	useEffect(() => {
