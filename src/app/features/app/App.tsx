@@ -21,9 +21,11 @@ import { WidgetManagerContext } from "app/hooks/widgetManagerContext";
 import { LockedContext } from "app/hooks/useIsLocked";
 import { useWorkspaces } from "app/hooks/workspaces";
 import WorkspaceSwitcher from "../workspaces/WorkspaceSwitcher";
+import CreateWorkspaceDialog from "../workspaces/CreateWorkspaceDialog";
 import { createContext } from "react";
 import { Workspace } from "app/Workspace";
 import { Widget } from "app/Widget";
+import deepCopy from "app/utils/deepcopy";
 
 
 export interface WorkspaceActions {
@@ -147,6 +149,7 @@ export default function App() {
 	const [theme, setTheme] = useStorage<ThemeConfig>("theme", {});
 	const [createIsOpen, setCreateOpen] = useState(false);
 	const [settingsIsOpen, setSettingsOpen] = useState(false);
+	const [createWorkspaceIsOpen, setCreateWorkspaceOpen] = useState(false);
 	const [widgetsHidden, setWidgetsHidden] = useState(false);
 	const [isLockedRaw, setIsLocked] = useStorage<boolean>("locked", false);
 	const [onboardingIsOpen, setOnboardingIsOpen] = useState<boolean | undefined>(undefined);
@@ -175,11 +178,12 @@ export default function App() {
 	classes.push(isLocked ? "locked" : "unlocked");
 
 	// Handle workspace creation
-	const handleCreateWorkspace = async () => {
-		const name = prompt("Enter workspace name:");
-		if (name) {
-			await createNewWorkspace(name.trim());
-		}
+	const handleCreateWorkspace = () => {
+		setCreateWorkspaceOpen(true);
+	};
+
+	const handleWorkspaceCreate = async (name: string) => {
+		await createNewWorkspace(name);
 	};
 
 	// Handle moving widget to another workspace
@@ -194,14 +198,17 @@ export default function App() {
 			return;
 		}
 
+		// Create a deep copy of the widget to prevent mirroring between workspaces
+		const widgetCopy = deepCopy(widget);
+
 		// Remove from current workspace
 		const updatedCurrentWidgets = widgetManager.widgets.filter(w => w.id !== widgetId);
 		await updateWorkspaceWidgets(activeWorkspaceId, updatedCurrentWidgets);
 
-		// Add to target workspace
+		// Add the copied widget to target workspace
 		const targetWorkspace = workspaces.find(w => w.id === targetWorkspaceId);
 		if (targetWorkspace) {
-			const updatedTargetWidgets = [...targetWorkspace.widgets, widget];
+			const updatedTargetWidgets = [...targetWorkspace.widgets, widgetCopy];
 			await updateWorkspaceWidgets(targetWorkspaceId, updatedTargetWidgets);
 		}
 
@@ -232,6 +239,12 @@ export default function App() {
 									onRenameWorkspace={renameWorkspace}
 									onDeleteWorkspace={deleteWorkspace}
 									isLocked={isLocked}
+								/>
+							)}
+							{createWorkspaceIsOpen && (
+								<CreateWorkspaceDialog
+									onClose={() => setCreateWorkspaceOpen(false)}
+									onCreate={handleWorkspaceCreate}
 								/>
 							)}
 							{showBookmarksBar && !onboardingIsOpen &&
