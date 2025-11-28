@@ -87,7 +87,7 @@ export default function App() {
 
 		setWidgetsLoaded(false);
 		loadWidgets();
-	}, [activeWorkspaceId, workspacesLoaded, activeWorkspace, widgetManager]);
+	}, [activeWorkspaceId, workspacesLoaded, widgetManager]);
 
 	// Override widget manager's save to save to workspace
 	useEffect(() => {
