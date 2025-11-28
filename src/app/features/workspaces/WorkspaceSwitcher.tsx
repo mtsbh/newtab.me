@@ -61,7 +61,7 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 	const activeWorkspace = props.workspaces.find(w => w.id === props.activeWorkspaceId);
 
 	return (
-		<div className="workspace-switcher">
+		<div className={mergeClasses("workspace-switcher", isOpen && "panel-open")}>
 			<button
 				className="workspace-toggle-btn"
 				onClick={() => setIsOpen(!isOpen)}

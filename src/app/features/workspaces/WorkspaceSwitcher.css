@@ -3,6 +3,8 @@
 	top: 16px;
 	left: 16px;
 	z-index: 100;
+	padding: 20px;
+	margin: -20px;
 }
 
 .workspace-toggle-btn {
@@ -21,6 +23,12 @@
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 	min-width: 140px;
+	opacity: 0;
+}
+
+.workspace-switcher:hover .workspace-toggle-btn,
+.workspace-switcher.panel-open .workspace-toggle-btn {
+	opacity: 1;
 }
 
 .workspace-toggle-btn:hover {
