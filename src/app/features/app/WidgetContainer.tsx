@@ -229,7 +229,11 @@ const WidgetContainerComponent = <T,>(props: WidgetProps<T>) => {
 						<i className="fas fa-grip-vertical mr-3" />
 						<FormattedMessage {...props.typeDef.title} />
 					</span>
-					<a className="btn" onClick={() => setMode(WidgetMode.Delete)}>
+					<a className="btn" onClick={(e) => {
+						e.stopPropagation();
+						e.preventDefault();
+						setMode(WidgetMode.Delete);
+					}}>
 						<i className="fas fa-trash" />
 					</a>
 				</div>
@@ -268,25 +272,41 @@ const WidgetContainerComponent = <T,>(props: WidgetProps<T>) => {
 
 				<Button variant={ButtonVariant.None}
 					className="widget-delete"
-					onClick={() => setMode(WidgetMode.Delete)}
+					onClick={(e: React.MouseEvent) => {
+						e.stopPropagation();
+						e.preventDefault();
+						setMode(WidgetMode.Delete);
+					}}
 					icon="fa fa-trash"
 					title={miscMessages.delete} />
 
 				<Button variant={ButtonVariant.None}
-					onClick={props.duplicate}
+					onClick={(e: React.MouseEvent) => {
+						e.stopPropagation();
+						e.preventDefault();
+						props.duplicate();
+					}}
 					data-cy="widget-duplicate"
 					icon="fas fa-clone"
 					title={miscMessages.duplicate} />
 
 				<Button variant={ButtonVariant.None}
-					onClick={() => setMode(WidgetMode.Move)}
+					onClick={(e: React.MouseEvent) => {
+						e.stopPropagation();
+						e.preventDefault();
+						setMode(WidgetMode.Move);
+					}}
 					data-cy="widget-move"
 					icon="fas fa-arrow-right"
 					title={{ id: "widget.move.tooltip", defaultMessage: "Move to workspace", description: "Move widget to another workspace" }} />
 
 				<Button variant={ButtonVariant.None}
 					className="btn widget-edit"
-					onClick={() => setMode(WidgetMode.Edit)}
+					onClick={(e: React.MouseEvent) => {
+						e.stopPropagation();
+						e.preventDefault();
+						setMode(WidgetMode.Edit);
+					}}
 					icon="fas fa-pen"
 					title={miscMessages.edit} />
 			</div>
