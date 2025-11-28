@@ -24,18 +24,18 @@ export function useWorkspaces() {
 			await migrateToWorkspaces();
 
 			const storedWorkspaces = await storage.get<Workspace[]>(WORKSPACES_KEY);
-			const storedActiveId = await storage.get<string>(ACTIVE_WORKSPACE_KEY);
 
 			if (storedWorkspaces && storedWorkspaces.length > 0) {
 				setWorkspacesState(storedWorkspaces);
-				setActiveWorkspaceIdState(storedActiveId || storedWorkspaces[0].id);
+				// Always default to first workspace on new tab
+				// This ensures closing and reopening the extension resets to default workspace
+				setActiveWorkspaceIdState(storedWorkspaces[0].id);
 			} else {
 				// Create default workspace (shouldn't happen after migration)
 				const defaultWorkspace = createWorkspace("Main");
 				setWorkspacesState([defaultWorkspace]);
 				setActiveWorkspaceIdState(defaultWorkspace.id);
 				await storage.set(WORKSPACES_KEY, [defaultWorkspace]);
-				await storage.set(ACTIVE_WORKSPACE_KEY, defaultWorkspace.id);
 			}
 			setLoaded(true);
 		};
@@ -53,7 +53,7 @@ export function useWorkspaces() {
 
 	// Switch to a different workspace - memoized
 	const switchWorkspace = useCallback(async (workspaceId: string) => {
-		await storage.set(ACTIVE_WORKSPACE_KEY, workspaceId);
+		// Don't persist active workspace - always default to first workspace on new tab
 		setActiveWorkspaceIdState(workspaceId);
 	}, []);
 

@@ -83,6 +83,7 @@ export default function App() {
 
 	// Load widgets from active workspace
 	const [widgetsLoaded, setWidgetsLoaded] = useState(false);
+	const [widgetLoadKey, setWidgetLoadKey] = useState(0);
 	useEffect(() => {
 		if (!workspacesLoaded || !activeWorkspace) {
 			setWidgetsLoaded(false);
@@ -101,9 +102,10 @@ export default function App() {
 			}
 
 			setWidgetsLoaded(true);
+			// Increment key to force WidgetGrid remount with new widgets
+			setWidgetLoadKey(prev => prev + 1);
 		};
 
-		setWidgetsLoaded(false);
 		loadWidgets();
 	}, [activeWorkspaceId, workspacesLoaded]);
 
@@ -269,7 +271,7 @@ export default function App() {
 									grid={gridSettings} setGrid={setGridSettings} />)}
 
 							{loaded && gridSettings &&
-								<WidgetGrid {...gridSettings} wm={widgetManager} isLocked={isLocked ?? false} />}
+								<WidgetGrid key={widgetLoadKey} {...gridSettings} wm={widgetManager} isLocked={isLocked ?? false} />}
 							{onboardingIsOpen && (
 								<Onboarding
 									onClose={() => setOnboardingIsOpen(false)}
