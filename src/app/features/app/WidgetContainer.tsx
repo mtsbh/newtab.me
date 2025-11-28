@@ -201,7 +201,7 @@ enum WidgetMode {
 }
 
 
-export function WidgetContainer<T>(props: WidgetProps<T>) {
+const WidgetContainerComponent = <T,>(props: WidgetProps<T>) => {
 	const [mode, setMode] = useState(WidgetMode.View);
 	const close = () => setMode(WidgetMode.View);
 	const intl = useIntl();
@@ -288,4 +288,7 @@ export function WidgetContainer<T>(props: WidgetProps<T>) {
 				<Child {...props} />
 			</ErrorBoundary>
 		</div>);
-}
+};
+
+// Memoize to prevent unnecessary re-renders when props haven't changed
+export const WidgetContainer = React.memo(WidgetContainerComponent) as typeof WidgetContainerComponent;
