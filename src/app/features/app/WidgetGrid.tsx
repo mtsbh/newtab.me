@@ -99,11 +99,13 @@ export default function WidgetGrid(props: WidgetGridProps) {
 	const needsPositioning = widgetManager.widgets.some(widget => !widget.position);
 
 	const layouter = new WidgetLayouter(new Vector2(gridColumns, maxRows ?? 0));
-	layouter.resolveAll(widgetManager.widgets);
+	const wasRepositioned = layouter.resolveAll(widgetManager.widgets);
 
-	// Save positions after layouter resolves them, but ONLY if there are new widgets
-	// This prevents saving on every render which causes performance issues
-	if (needsPositioning) {
+	// Save positions after layouter resolves them if:
+	// 1. There are new widgets without positions, OR
+	// 2. Any existing widgets were repositioned due to collisions
+	// This prevents saving on every render while fixing overlapping widgets
+	if (needsPositioning || wasRepositioned) {
 		// Use setTimeout to avoid saving during render
 		setTimeout(() => widgetManager.save(), 0);
 	}

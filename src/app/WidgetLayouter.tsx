@@ -10,6 +10,7 @@ import { Widget } from "./Widget";
  */
 export default class WidgetLayouter {
 	private rects: Rect2[] = [];
+	private repositionedCount = 0;
 
 	/**
 	 * @param grid_size Size of the grid. Y=0 if the grid has unlimited height
@@ -45,6 +46,8 @@ export default class WidgetLayouter {
 				widget.position = undefined;
 			}
 
+			this.repositionedCount++;
+
 			while (!widget.position) {
 				widget.position = this.findFreePosition(widget.size);
 				if (!widget.position) {
@@ -60,8 +63,10 @@ export default class WidgetLayouter {
 		this.rects.push(new Rect2(widget.position, widget.size));
 	}
 
-	resolveAll(widgets: Widget<unknown>[]) {
+	resolveAll(widgets: Widget<unknown>[]): boolean {
+		this.repositionedCount = 0;
 		widgets.filter(widget => widget.position).forEach(this.add.bind(this));
 		widgets.filter(widget => !widget.position).forEach(this.add.bind(this));
+		return this.repositionedCount > 0;
 	}
 }
