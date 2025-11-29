@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useState } from "react";
+import React, { CSSProperties, useEffect, useState, useMemo } from "react";
 import { WidgetContainer } from "./WidgetContainer";
 import { WidgetManager } from "app/WidgetManager";
 import { WidgetTypes } from "app/widgets";
@@ -78,7 +78,6 @@ const ReactGridLayout = WidthProvider(GridLayout);
 export default function WidgetGrid(props: WidgetGridProps) {
 	const widgetManager = props.wm;
 	const [gridClassNames, setGridClassNames] = useState("layout");
-	const [renderTrigger, setRenderTrigger] = useState(0);
 	const gridColumns = props.columns;
 	const cellSize = 50;
 	const cellSpacing = props.spacing;
@@ -92,35 +91,32 @@ export default function WidgetGrid(props: WidgetGridProps) {
 
 	function handleRemove(id: number) {
 		widgetManager.removeWidget(id);
-		setRenderTrigger(v => v + 1);
 	}
 
-	// Check if any widgets need positioning (new widgets without positions)
-	const needsPositioning = widgetManager.widgets.some(widget => !widget.position);
 
-	const layouter = new WidgetLayouter(new Vector2(gridColumns, maxRows ?? 0));
-	const wasRepositioned = layouter.resolveAll(widgetManager.widgets);
-
-	// Save positions after layouter resolves them if:
-	// 1. There are new widgets without positions, OR
-	// 2. Any existing widgets were repositioned due to collisions
-	// This prevents saving on every render while fixing overlapping widgets
-	if (needsPositioning || wasRepositioned) {
-	// Only run the layouter if there are widgets that need positioning
-	// This prevents interference with drag/resize operations and improves performance
-	if (needsPositioning) {
+	// Memoize layout processing to avoid recreating on every render
+	const { sortedWidgets, layout } = useMemo(() => {
 		const layouter = new WidgetLayouter(new Vector2(gridColumns, maxRows ?? 0));
 		layouter.resolveAll(widgetManager.widgets);
-		// Use setTimeout to avoid saving during render
-		setTimeout(() => widgetManager.save(), 0);
-	}
 
-	// Sort widgets to allow predictable focus order
-	widgetManager.widgets.sort((a, b) =>
-		(a.position!.x + 100 * a.position!.y) -
-		(b.position!.x + 100 * b.position!.y));
+		// Sort widgets to allow predictable focus order
+		const sorted = [...widgetManager.widgets].sort((a, b) =>
+			(a.position!.x + 100 * a.position!.y) -
+			(b.position!.x + 100 * b.position!.y));
 
-	const widgets = widgetManager.widgets.map(widget => {
+		const layout : Layout[] = sorted.map(widget => ({
+			i: widget.id.toString(),
+			x: widget.position?.x ?? 0,
+			y: widget.position?.y ?? 0,
+			w: widget.size.x,
+			h: widget.size.y,
+		}));
+
+		return { sortedWidgets: sorted, layout };
+	}, [widgetManager.widgets, gridColumns, maxRows]);
+
+	// Memoize widgets to prevent unnecessary re-renders
+	const widgets = useMemo(() => sortedWidgets.map(widget => {
 		const props : WidgetProps<unknown> = {
 			...widget,
 			typeDef: WidgetTypes[widget.type],
@@ -128,7 +124,6 @@ export default function WidgetGrid(props: WidgetGridProps) {
 			remove: () => handleRemove(widget.id),
 			duplicate: () => {
 				widgetManager.clone(widget);
-				setRenderTrigger(v => v + 1);
 			},
 		};
 
@@ -142,31 +137,26 @@ export default function WidgetGrid(props: WidgetGridProps) {
 					<WidgetContainer {...props} />
 				</ErrorBoundary>
 			</div>);
-	});
-
-	const layout : Layout[] = widgetManager.widgets.map(widget => ({
-		i: widget.id.toString(),
-		x: widget.position?.x ?? 0,
-		y: widget.position?.y ?? 0,
-		w: widget.size.x,
-		h: widget.size.y,
-	}));
+	}), [sortedWidgets, widgetManager]);
 
 	function onLayoutChange(layouts: Layout[]) {
 		const lut = new Map<string, Layout>();
 		layouts.forEach(layout => lut.set(layout.i, layout));
 
-		widgetManager.widgets.forEach(widget => {
+		// Create new array with updated widgets instead of mutating
+		widgetManager.widgets = widgetManager.widgets.map(widget => {
 			const layout = lut.get(widget.id.toString());
 			if (layout) {
-				widget.position = new Vector2(layout.x, layout.y);
-				widget.size = new Vector2(layout.w, layout.h);
+				return {
+					...widget,
+					position: new Vector2(layout.x, layout.y),
+					size: new Vector2(layout.w, layout.h),
+				};
 			}
+			return widget;
 		});
 
 		widgetManager.save();
-		// Don't re-render here - it disrupts drag/resize operations
-		// React Grid Layout handles the visual updates internally
 	}
 
 	const wrapStyle: CSSProperties = {
@@ -197,7 +187,7 @@ export default function WidgetGrid(props: WidgetGridProps) {
 						isBounded={props.fullPage}
 						width={!props.fullPage ? gridWidth : undefined}
 						autoSize={!props.fullPage}
-						preventCollision={false}
+						preventCollision={props.fullPage}
 						maxRows={maxRows}
 						compactType={props.fullPage ? null : "vertical"}>
 					{widgets}
