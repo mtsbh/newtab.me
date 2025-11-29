@@ -158,7 +158,6 @@ export default function App() {
 	const [isLockedRaw, setIsLocked] = useStorage<boolean>("locked", false);
 	const [onboardingIsOpen, setOnboardingIsOpen] = useState<boolean | undefined>(undefined);
 	const isLocked = onboardingIsOpen === true || (isLockedRaw ?? false);
-	const isLocked = onboardingIsOpen !== false || (isLockedRaw ?? false);
 
 	const loaded = workspacesLoaded && widgetsLoaded && localeMessages != null;
 
