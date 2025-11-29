@@ -6,7 +6,7 @@ import { BackgroundConfig } from "app/hooks/background";
 import { cacheStorage } from "app/storage";
 import { enumToValue } from "app/utils/enum";
 import { toTypedJSON } from "app/utils/TypedJSON";
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import ActualBackground from "./ActualBackground";
 import { CreditsProps } from "./Credits";
 
@@ -96,6 +96,9 @@ export default function Background(props: BackgroundProps) {
 	const [force, forceUpdate] = useForceUpdateValue();
 	const provider = getBackgroundProvider(props.background?.mode ?? "");
 
+	// Keep track of the last successfully loaded background to prevent black screen during transitions
+	const lastLoadedBgRef = useRef<{ actualBg: ActualBackgroundProps, provider: BackgroundProvider<any> } | null>(null);
+
 	const values = useMemo(() => {
 		if (!provider) {
 			return {};
@@ -111,16 +114,25 @@ export default function Background(props: BackgroundProps) {
 	const [actualBg] = usePromise(() =>
 		provider ? loadBackground(provider, values) : Promise.resolve(null), [provider, values, force]);
 
-	if (!actualBg || !provider) {
+	// Update the last loaded background when we have a new one
+	if (actualBg && provider) {
+		lastLoadedBgRef.current = { actualBg, provider };
+	}
+
+	// If we don't have a background yet but have a previously loaded one, keep showing it
+	// This prevents black screen flashing when switching workspaces
+	const bgToDisplay = (actualBg && provider) ? { actualBg, provider } : lastLoadedBgRef.current;
+
+	if (!bgToDisplay) {
 		return (<div id="background" />);
 	}
 
-	const credits = actualBg.credits ? { ... actualBg.credits } as CreditsProps : undefined;
+	const credits = bgToDisplay.actualBg.credits ? { ... bgToDisplay.actualBg.credits } as CreditsProps : undefined;
 	if (credits) {
 		credits.setIsHovered = props.setWidgetsHidden;
 		credits.onVoted = (isPositive) => {
 			if (!isPositive) {
-				if (provider.enableCaching) {
+				if (bgToDisplay.provider.enableCaching) {
 					cacheStorage.remove("bg");
 				}
 				forceUpdate();
@@ -128,5 +140,5 @@ export default function Background(props: BackgroundProps) {
 		};
 	}
 
-	return (<ActualBackground {...actualBg} credits={credits} />);
+	return (<ActualBackground {...bgToDisplay.actualBg} credits={credits} />);
 }
