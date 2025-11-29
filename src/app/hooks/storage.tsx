@@ -1,15 +1,11 @@
 import { IStorage, largeStorage, storage } from "app/storage";
 import debounce from "app/utils/debounce";
 import { useCallback, useMemo, useState } from "react";
-import { useForceUpdate } from ".";
 import { useRunPromise } from "./promises";
 
 
 function useStorageBacking<T>(backing: IStorage, key: string,
 		defaultValue?: (T | null), enableDebounce?: boolean): [T | null, (val: T) => void] {
-	// For table values
-	const forceUpdate = useForceUpdate();
-
 	const [value, setValue] = useState<T | null>(null);
 
 	useRunPromise<T | null>(() => backing.get(key),
@@ -27,8 +23,8 @@ function useStorageBacking<T>(backing: IStorage, key: string,
 			backing.set(key, val)
 		}
 		setValue(val);
-		forceUpdate();
-	}, [backing, enableDebounce, forceUpdate, key, setStorage]);
+		// Removed forceUpdate() - setValue already triggers re-render
+	}, [backing, enableDebounce, key, setStorage]);
 
 	return [value, updateValue];
 }

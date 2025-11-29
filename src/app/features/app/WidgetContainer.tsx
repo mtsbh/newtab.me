@@ -1,4 +1,4 @@
-import React, { useState, KeyboardEvent } from "react";
+import React, { useState, KeyboardEvent, useContext } from "react";
 import { getSchemaForWidget, WidgetProps, getThemeSchemaForWidget } from "../../Widget";
 import Modal from "app/components/Modal";
 import { Form } from "app/components/forms";
@@ -9,6 +9,7 @@ import { miscMessages } from "app/locale/common";
 import Button, { ButtonVariant } from "app/components/Button";
 import { SchemaEntry } from "app/utils/Schema";
 import { MyFormattedMessage } from "app/locale/MyMessageDescriptor";
+import { WorkspaceActionsContext } from "./App";
 
 
 interface WidgetDialogProps<T> extends WidgetProps<T> {
@@ -23,7 +24,7 @@ function WidgetEditor<T>(props: WidgetDialogProps<T>) {
 	const forceUpdate = () => setForce({});
 
 	const title = intl.formatMessage(
-		{ defaultMessage: "Edit {type}" },
+		{ id: "widget.edit.title", defaultMessage: "Edit {type}" },
 		{ type: intl.formatMessage(props.typeDef.title) });
 
 	const [schema, error] = usePromise(() => getSchemaForWidget(props, props.typeDef, intl),
@@ -68,6 +69,7 @@ function WidgetEditor<T>(props: WidgetDialogProps<T>) {
 
 				<h2 className="mt-6">
 					<FormattedMessage
+						id="widget.edit.styling"
 						defaultMessage="Styling"
 						description="Subheading for per-widget styling properties" />
 				</h2>
@@ -88,12 +90,13 @@ function WidgetEditor<T>(props: WidgetDialogProps<T>) {
 function WidgetDelete<T>(props: WidgetDialogProps<T>) {
 	const intl = useIntl();
 	const title = intl.formatMessage(
-			{ defaultMessage: "Remove {type}" },
+			{ id: "widget.delete.title", defaultMessage: "Remove {type}" },
 			{ type: intl.formatMessage(props.typeDef.title) });
 	return (
 		<Modal title={title} {...props}>
 			<div className="modal-body">
 				<FormattedMessage
+					id="widget.delete.confirm"
 					defaultMessage="Are you sure you want to permanently remove this widget?"
 					description="Delete widget modal message" />
 			</div>
@@ -108,14 +111,102 @@ function WidgetDelete<T>(props: WidgetDialogProps<T>) {
 }
 
 
-enum WidgetMode {
-	View,
-	Edit,
-	Delete
+function WidgetMoveToWorkspace<T>(props: WidgetDialogProps<T>) {
+	const intl = useIntl();
+	const workspaceContext = useContext(WorkspaceActionsContext);
+	const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+	const [isMoving, setIsMoving] = useState(false);
+
+	if (!workspaceContext) {
+		return null;
+	}
+
+	const { workspaces, activeWorkspaceId, moveWidgetToWorkspace } = workspaceContext;
+	const availableWorkspaces = workspaces.filter(w => w.id !== activeWorkspaceId);
+
+	const title = intl.formatMessage(
+		{ id: "widget.move.title", defaultMessage: "Move {type} to Workspace" },
+		{ type: intl.formatMessage(props.typeDef.title) });
+
+	const handleMove = async () => {
+		if (!selectedWorkspaceId) {
+			return;
+		}
+
+		setIsMoving(true);
+		try {
+			await moveWidgetToWorkspace(props.id, selectedWorkspaceId);
+			props.onClose();
+		} catch (error) {
+			console.error("Failed to move widget:", error);
+			setIsMoving(false);
+		}
+	};
+
+	return (
+		<Modal title={title} {...props}>
+			<div className="modal-body">
+				<p>
+					<FormattedMessage
+						id="widget.move.select"
+						defaultMessage="Select the workspace to move this widget to:"
+						description="Move widget modal message" />
+				</p>
+				<div className="form-group">
+					{availableWorkspaces.length === 0 ? (
+						<p className="text-muted">
+							<FormattedMessage
+								id="widget.move.noWorkspaces"
+								defaultMessage="No other workspaces available. Create a new workspace first."
+								description="No workspaces available message" />
+						</p>
+					) : (
+						<select
+							className="form-control"
+							value={selectedWorkspaceId || ""}
+							onChange={(e) => setSelectedWorkspaceId(e.target.value)}
+							disabled={isMoving}
+							autoFocus={true}
+						>
+							<option value="">
+								{intl.formatMessage({
+									id: "widget.move.selectPlaceholder",
+									defaultMessage: "Select workspace...",
+									description: "Workspace selection placeholder"
+								})}
+							</option>
+							{availableWorkspaces.map(workspace => (
+								<option key={workspace.id} value={workspace.id}>
+									{workspace.name}
+								</option>
+							))}
+						</select>
+					)}
+				</div>
+			</div>
+			<div className="modal-footer buttons">
+				<Button variant={ButtonVariant.Secondary} data-cy="cancel"
+					onClick={props.onClose} label={miscMessages.cancel}
+					disabled={isMoving} />
+				<Button variant={ButtonVariant.Primary} autoFocus={false}
+					onClick={handleMove}
+					label={{ id: "widget.move.button", defaultMessage: "Move", description: "Move widget button" }}
+					data-cy="move"
+					disabled={!selectedWorkspaceId || isMoving} />
+			</div>
+		</Modal>);
 }
 
 
-export function WidgetContainer<T>(props: WidgetProps<T>) {
+enum WidgetMode {
+	View,
+	Edit,
+	Delete,
+	Move
+}
+
+
+const WidgetContainerComponent = <T,>(props: WidgetProps<T>) => {
 	const [mode, setMode] = useState(WidgetMode.View);
 	const close = () => setMode(WidgetMode.View);
 	const intl = useIntl();
@@ -125,6 +216,8 @@ export function WidgetContainer<T>(props: WidgetProps<T>) {
 		return (<WidgetEditor onClose={close} {...props} />);
 	case WidgetMode.Delete:
 		return (<WidgetDelete onClose={close} {...props} />);
+	case WidgetMode.Move:
+		return (<WidgetMoveToWorkspace onClose={close} {...props} />);
 	}
 
 	if (typeof browser === "undefined" && props.typeDef.isBrowserOnly === true) {
@@ -136,12 +229,17 @@ export function WidgetContainer<T>(props: WidgetProps<T>) {
 						<i className="fas fa-grip-vertical mr-3" />
 						<FormattedMessage {...props.typeDef.title} />
 					</span>
-					<a className="btn" onClick={() => setMode(WidgetMode.Delete)}>
+					<a className="btn" onClick={(e) => {
+						e.stopPropagation();
+						e.preventDefault();
+						setMode(WidgetMode.Delete);
+					}}>
 						<i className="fas fa-trash" />
 					</a>
 				</div>
 				<div className="panel text-muted">
 					<FormattedMessage
+							id="widget.browserOnly"
 							defaultMessage="This widget requires the browser extension version." />
 				</div>
 			</>);
@@ -174,19 +272,41 @@ export function WidgetContainer<T>(props: WidgetProps<T>) {
 
 				<Button variant={ButtonVariant.None}
 					className="widget-delete"
-					onClick={() => setMode(WidgetMode.Delete)}
+					onClick={(e: React.MouseEvent) => {
+						e.stopPropagation();
+						e.preventDefault();
+						setMode(WidgetMode.Delete);
+					}}
 					icon="fa fa-trash"
 					title={miscMessages.delete} />
 
 				<Button variant={ButtonVariant.None}
-					onClick={props.duplicate}
+					onClick={(e: React.MouseEvent) => {
+						e.stopPropagation();
+						e.preventDefault();
+						props.duplicate();
+					}}
 					data-cy="widget-duplicate"
 					icon="fas fa-clone"
 					title={miscMessages.duplicate} />
 
 				<Button variant={ButtonVariant.None}
+					onClick={(e: React.MouseEvent) => {
+						e.stopPropagation();
+						e.preventDefault();
+						setMode(WidgetMode.Move);
+					}}
+					data-cy="widget-move"
+					icon="fas fa-arrow-right"
+					title={{ id: "widget.move.tooltip", defaultMessage: "Move to workspace", description: "Move widget to another workspace" }} />
+
+				<Button variant={ButtonVariant.None}
 					className="btn widget-edit"
-					onClick={() => setMode(WidgetMode.Edit)}
+					onClick={(e: React.MouseEvent) => {
+						e.stopPropagation();
+						e.preventDefault();
+						setMode(WidgetMode.Edit);
+					}}
 					icon="fas fa-pen"
 					title={miscMessages.edit} />
 			</div>
@@ -194,4 +314,7 @@ export function WidgetContainer<T>(props: WidgetProps<T>) {
 				<Child {...props} />
 			</ErrorBoundary>
 		</div>);
-}
+};
+
+// Memoize to prevent unnecessary re-renders when props haven't changed
+export const WidgetContainer = React.memo(WidgetContainerComponent) as typeof WidgetContainerComponent;

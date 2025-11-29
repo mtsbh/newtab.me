@@ -18,6 +18,7 @@ import Notes from "./Notes";
 import Quotes from "./Quotes";
 import Search from "./Search";
 import SpaceFlights from "./SpaceFlights";
+import TechnicalAnalysis from "./TechnicalAnalysis";
 import Text from "./Text";
 import TodoList from "./TodoList";
 import TopSites from "./TopSites";
@@ -44,6 +45,7 @@ export const WidgetTypes: { [name: string]: WidgetType<any> } = {
 	Quotes,
 	Search,
 	SpaceFlights,
+	TechnicalAnalysis,
 	Text,
 	TodoList,
 	TopSites,

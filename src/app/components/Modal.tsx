@@ -70,7 +70,7 @@ export default function Modal(props: ModalProps) {
 					<h2 id={modalTitleId}>{props.title}</h2>
 					{props.onClose && (
 						<button className="btn modal-close" onClick={props.onClose}
-								aria-label={intl.formatMessage({ defaultMessage: "Close" })}>
+								aria-label={intl.formatMessage({ id: "modal.close", defaultMessage: "Close" })}>
 							<i className="fas fa-times" />
 						</button>)}
 				</div>

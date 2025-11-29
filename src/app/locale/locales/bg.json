@@ -870,10 +870,6 @@
         "message": "Трябва да увеличите „Grid Columns“ до поне {cols}, за да използвате най-добре пространството.",
         "description": "Widget grid: form label 2 for grid full width"
     },
-    "YuNOET": {
-        "message": "HTML",
-        "description": "HTML widget: form field label"
-    },
     "Z79HMN": {
         "message": "Произволни подбрани фонове",
         "description": "Backgroud mode description"
@@ -991,10 +987,6 @@
     "mSg5KK": {
         "message": "Яркост: Тъмно",
         "description": "Backgroud settings: form field label"
-    },
-    "mv9TrH": {
-        "message": "HTML",
-        "description": "HTML Widget"
     },
     "mw6Uh+": {
         "message": "Показване на дневна прогноза",
@@ -1271,10 +1263,6 @@
         "message": "Моля, прочетете <a>урока</a>. Можете да използвате всеки облачен календар, който поддържа iCal, включително Google Calendar и Outlook.",
         "description": "CalendarSchedule widget: edit hint"
     },
-    "ywSKRt": {
-        "message": "Персонализиран HTML",
-        "description": "HTML widget description"
-    },
     "qfkgCx": {
         "message": "Колко далеч в бъдещето да търсим събития. Задайте 1, за да показвате само днешните събития, 2 за днес и утре и т.н.",
         "description": "CalendarSchedule widget: form field hint (max number of days)"
@@ -1309,5 +1297,13 @@
     "ubO4zt": {
         "message": "Уеб комикс",
         "description": "Web Comic Widget"
+    },
+    "widget.html.html": {
+        "message": "HTML",
+        "description": "HTML widget: form field label"
+    },
+    "widget.html.description": {
+        "message": "Персонализиран HTML",
+        "description": "HTML widget description"
     }
 }

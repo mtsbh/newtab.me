@@ -65,7 +65,8 @@ export class WidgetManager {
 			props: deepCopy({ ...widget_type.initialProps, ...props }),
 			theme: deepCopy({ ...getInitialTheme(widget_type), ...theme }),
 		};
-		this.widgets.push(widget);
+		// Create new array reference instead of mutating
+		this.widgets = [...this.widgets, widget];
 
 		if (widget_type.onCreated) {
 			widget_type.onCreated(widget);
@@ -81,12 +82,8 @@ export class WidgetManager {
 	}
 
 	removeWidget(id: number) {
-		let i = this.widgets.length;
-		while (i--) {
-			if (this.widgets[i].id == id) {
-				this.widgets.splice(i, 1);
-			}
-		}
+		// Create new array reference instead of mutating
+		this.widgets = this.widgets.filter(widget => widget.id !== id);
 		this.save();
 	}
 

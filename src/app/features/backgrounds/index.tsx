@@ -6,7 +6,7 @@ import { BackgroundConfig } from "app/hooks/background";
 import { cacheStorage } from "app/storage";
 import { enumToValue } from "app/utils/enum";
 import { toTypedJSON } from "app/utils/TypedJSON";
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import ActualBackground from "./ActualBackground";
 import { CreditsProps } from "./Credits";
 
@@ -37,7 +37,6 @@ async function loadFromCache(key: string, provider: BackgroundProvider<any>): Pr
 	if (cached.key == key) {
 		return cached;
 	} else {
-		console.log("Clearing background cache due to changed key");
 		cacheStorage.remove("bg");
 		return undefined;
 	}
@@ -63,7 +62,6 @@ function isNotExpired(fetchedAt: Date, expiry: CacheExpiry) {
 async function updateBackground<T>(key: string, provider: BackgroundProvider<T>, values: T): Promise<ActualBackgroundProps | undefined> {
 	const retval = await provider.get(values);
 	if (retval && provider.enableCaching) {
-		console.log("Filling background cache from provider");
 		const toCache: BackgroundCache = {
 			key,
 			value: retval,
@@ -82,16 +80,13 @@ async function loadBackground(provider: BackgroundProvider<any>,
 	const key = `${provider.id}:${JSON.stringify(toTypedJSON(values))}`;
 	const cache = await loadFromCache(key, provider);
 	if (cache && values.cacheExpiry && isNotExpired(cache.fetchedAt, values.cacheExpiry ?? CacheExpiry.Hourly)) {
-		console.log("Setting background from cache");
 		return cache.value;
 	}
 
 	if (cache) {
-		console.log("Setting background from cache, updating in the background");
 		updateBackground(key, provider, values).catch(console.error);
 		return cache.value;
 	} else {
-		console.log("Setting background from provider");
 		return await updateBackground(key, provider, values);
 	}
 }
@@ -100,6 +95,9 @@ async function loadBackground(provider: BackgroundProvider<any>,
 export default function Background(props: BackgroundProps) {
 	const [force, forceUpdate] = useForceUpdateValue();
 	const provider = getBackgroundProvider(props.background?.mode ?? "");
+
+	// Keep track of the last successfully loaded background to prevent black screen during transitions
+	const lastLoadedBgRef = useRef<{ actualBg: ActualBackgroundProps, provider: BackgroundProvider<any> } | null>(null);
 
 	const values = useMemo(() => {
 		if (!provider) {
@@ -116,16 +114,25 @@ export default function Background(props: BackgroundProps) {
 	const [actualBg] = usePromise(() =>
 		provider ? loadBackground(provider, values) : Promise.resolve(null), [provider, values, force]);
 
-	if (!actualBg || !provider) {
+	// Update the last loaded background when we have a new one
+	if (actualBg && provider) {
+		lastLoadedBgRef.current = { actualBg, provider };
+	}
+
+	// If we don't have a background yet but have a previously loaded one, keep showing it
+	// This prevents black screen flashing when switching workspaces
+	const bgToDisplay = (actualBg && provider) ? { actualBg, provider } : lastLoadedBgRef.current;
+
+	if (!bgToDisplay) {
 		return (<div id="background" />);
 	}
 
-	const credits = actualBg.credits ? { ... actualBg.credits } as CreditsProps : undefined;
+	const credits = bgToDisplay.actualBg.credits ? { ... bgToDisplay.actualBg.credits } as CreditsProps : undefined;
 	if (credits) {
 		credits.setIsHovered = props.setWidgetsHidden;
 		credits.onVoted = (isPositive) => {
 			if (!isPositive) {
-				if (provider.enableCaching) {
+				if (bgToDisplay.provider.enableCaching) {
 					cacheStorage.remove("bg");
 				}
 				forceUpdate();
@@ -133,5 +140,5 @@ export default function Background(props: BackgroundProps) {
 		};
 	}
 
-	return (<ActualBackground {...actualBg} credits={credits} />);
+	return (<ActualBackground {...bgToDisplay.actualBg} credits={credits} />);
 }

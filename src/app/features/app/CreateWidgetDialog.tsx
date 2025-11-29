@@ -60,12 +60,13 @@ export default function CreateWidgetDialog(props: CreateWidgetDialogProps) {
 	}
 
 	const placeholder = intl.formatMessage({
+		id: "createWidget.searchPlaceholder",
 		defaultMessage: "Search widgets...",
 		description: "Create Widgets modal: search widgets placeholder"
 	})
 
 	return (
-		<Modal title={intl.formatMessage({ defaultMessage: "Create Widget" })} wide={true}  {...props}>
+		<Modal title={intl.formatMessage({ id: "createWidget.title", defaultMessage: "Create Widget" })} wide={true}  {...props}>
 			<input type="search" placeholder={placeholder} autoFocus={true}
 				value={query} onChange={(e) => setQuery(e.target.value)} />
 			<ul className="links large" role="menu">

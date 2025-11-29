@@ -111,7 +111,7 @@ export default function SettingsDialog(props: SettingsDialogProps) {
 	}
 
 	return (
-		<Modal title={intl.formatMessage({ defaultMessage: "Settings "})}
+		<Modal title={intl.formatMessage({ id: "settings.title", defaultMessage: "Settings "})}
 				wide={true} {...props}>
 			<div className="modal-flex">
 				<nav role="tablist">

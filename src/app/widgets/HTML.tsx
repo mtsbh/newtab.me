@@ -2,28 +2,32 @@ import Panel from 'app/components/Panel';
 import { type } from 'app/utils/Schema';
 import { Vector2 } from 'app/utils/Vector2';
 import { WidgetProps, WidgetType } from 'app/Widget';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { defineMessages } from 'react-intl';
 
 
 const messages = defineMessages({
 	title: {
+		id: 'widget.html.title',
 		defaultMessage: "HTML",
 		description: "HTML Widget",
 	},
 
 	description: {
+		id: 'widget.html.description',
 		defaultMessage: "Custom HTML",
 		description: "HTML widget description",
 	},
 
 	html: {
+		id: 'widget.html.html',
 		defaultMessage: "HTML",
 		description: "HTML widget: form field label",
 	},
 
-	noJS: {
-		defaultMessage: "JavaScript is not supported for security reasons. Use the iFrame widget instead",
+	jsEnabled: {
+		id: 'widget.html.jsEnabled',
+		defaultMessage: "JavaScript is now supported. Only use trusted code.",
 		description: "HTML widget: form field description",
 	}
 });
@@ -33,9 +37,46 @@ interface HTMLProps {
 }
 
 function HTML(props: WidgetProps<HTMLProps>) {
+	const containerRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (!containerRef.current) return;
+
+		// Clear previous content
+		containerRef.current.innerHTML = props.props.html;
+
+		// Execute scripts manually to enable JavaScript
+		const scripts = containerRef.current.querySelectorAll('script');
+		scripts.forEach((oldScript) => {
+			const newScript = document.createElement('script');
+
+			// Copy attributes
+			Array.from(oldScript.attributes).forEach(attr => {
+				newScript.setAttribute(attr.name, attr.value);
+			});
+
+			// Copy inline script content
+			if (oldScript.textContent) {
+				newScript.textContent = oldScript.textContent;
+			}
+
+			// Replace old script with new one to execute it
+			oldScript.parentNode?.replaceChild(newScript, oldScript);
+		});
+
+		// Cleanup function
+		return () => {
+			// Remove scripts on unmount to prevent memory leaks
+			if (containerRef.current) {
+				const scripts = containerRef.current.querySelectorAll('script');
+				scripts.forEach(script => script.remove());
+			}
+		};
+	}, [props.props.html]);
+
 	return (
 		<Panel {...props.theme} scrolling={false}>
-			<div dangerouslySetInnerHTML={{__html: props.props.html}} />
+			<div ref={containerRef} />
 		</Panel>);
 }
 
@@ -49,7 +90,7 @@ const widget: WidgetType<HTMLProps> = {
 		html: "Hello <b>World</b>"
 	},
 	schema: {
-		html: type.textarea(messages.html, messages.noJS),
+		html: type.textarea(messages.html, messages.jsEnabled),
 	},
 };
 export default widget;

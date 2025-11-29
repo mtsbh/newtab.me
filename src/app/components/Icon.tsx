@@ -17,7 +17,7 @@ export default function Icon(props: IconProps) {
 	const [errored, setErrored] = useState(false);
 	const requiresIcons = props.requiresIcons ?? true;
 
-	const [icon,] = usePromise(async () => {
+	const [icon, isLoading] = usePromise(async () => {
 		if (props.icon instanceof Promise) {
 			return await props.icon;
 		} else {
@@ -25,15 +25,26 @@ export default function Icon(props: IconProps) {
 		}
 	}, [props.icon]);
 
-	if (!requiresIcons && (!icon || icon.length == 0)) {
+	// While loading or if no icon, don't show anything if icons are not required
+	if (!requiresIcons && (isLoading || !icon || icon.length == 0)) {
 		return null;
-	} else if (errored) {
+	}
+
+	// If still loading and icons are required, return null to prevent flashing
+	if (isLoading) {
+		return null;
+	}
+
+	if (errored) {
 		return (<span title={props.title} className={props.className}><i className={`fas ${props.errorIcon ?? "fa-times"} icon`} /></span>);
 	} else if (typeof icon == "string" && (icon.includes("/") || icon.startsWith("data:"))) {
 		return (<img title={props.title} className={mergeClasses("icon", props.className)} src={icon} onError={() => setErrored(true)} />);
 	} else if (typeof icon == "string" && icon.startsWith("fa-")) {
 		return (<span title={props.title} className={props.className}><i className={`fas ${icon} icon`} /></span>);
+	} else if (props.defaultIcon) {
+		return (<span title={props.title} className={props.className}><i className={`fas ${props.defaultIcon} icon`} /></span>);
 	} else {
-		return (<span title={props.title} className={props.className}><i className={`fas ${props.defaultIcon ?? "fa-circle"} icon`} /></span>);
+		// No icon and no default, return null
+		return null;
 	}
 }
