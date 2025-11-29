@@ -95,11 +95,18 @@ export default function WidgetGrid(props: WidgetGridProps) {
 		setRenderTrigger(v => v + 1);
 	}
 
+	// Check if any widgets need positioning (new widgets without positions)
+	const needsPositioning = widgetManager.widgets.some(widget => !widget.position);
+
 	const layouter = new WidgetLayouter(new Vector2(gridColumns, maxRows ?? 0));
 	layouter.resolveAll(widgetManager.widgets);
 
-	// Save positions after layouter resolves them (fixes new widgets appearing on top of existing ones)
-	setTimeout(() => widgetManager.save(), 0);
+	// Save positions after layouter resolves them, but ONLY if there are new widgets
+	// This prevents saving on every render which causes performance issues
+	if (needsPositioning) {
+		// Use setTimeout to avoid saving during render
+		setTimeout(() => widgetManager.save(), 0);
+	}
 
 	// Sort widgets to allow predictable focus order
 	widgetManager.widgets.sort((a, b) =>
@@ -151,6 +158,8 @@ export default function WidgetGrid(props: WidgetGridProps) {
 		});
 
 		widgetManager.save();
+		// Don't re-render here - it disrupts drag/resize operations
+		// React Grid Layout handles the visual updates internally
 	}
 
 	const wrapStyle: CSSProperties = {
