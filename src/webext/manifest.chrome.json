@@ -16,8 +16,8 @@
 	"chrome_url_overrides" : {
 		"newtab": "app/webext.html"
 	},
-	"content_security_policy": {
-		"extension_pages": "script-src 'self' 'wasm-unsafe-eval' 'inline-speculation-rules' https://s3.tradingview.com; object-src 'self'"
+	"sandbox": {
+		"pages": ["sandbox.html"]
 	},
 	"permissions": [
 		"storage",

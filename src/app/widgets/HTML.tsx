@@ -38,45 +38,83 @@ interface HTMLProps {
 
 function HTML(props: WidgetProps<HTMLProps>) {
 	const containerRef = useRef<HTMLDivElement>(null);
+	const iframeRef = useRef<HTMLIFrameElement>(null);
+	const [useSandbox, setUseSandbox] = useState(false);
 
 	useEffect(() => {
-		if (!containerRef.current) return;
+		// Check if HTML contains external scripts (requires sandbox)
+		const hasExternalScript = /<script[^>]*src=["']https?:\/\//.test(props.props.html);
+		setUseSandbox(hasExternalScript);
+	}, [props.props.html]);
 
-		// Clear previous content
-		containerRef.current.innerHTML = props.props.html;
+	useEffect(() => {
+		if (!useSandbox && containerRef.current) {
+			// Standard mode: inject HTML directly
+			containerRef.current.innerHTML = props.props.html;
 
-		// Execute scripts manually to enable JavaScript
-		const scripts = containerRef.current.querySelectorAll('script');
-		scripts.forEach((oldScript) => {
-			const newScript = document.createElement('script');
+			// Execute scripts manually to enable JavaScript
+			const scripts = containerRef.current.querySelectorAll('script');
+			scripts.forEach((oldScript) => {
+				const newScript = document.createElement('script');
 
-			// Copy attributes
-			Array.from(oldScript.attributes).forEach(attr => {
-				newScript.setAttribute(attr.name, attr.value);
+				// Copy attributes
+				Array.from(oldScript.attributes).forEach(attr => {
+					newScript.setAttribute(attr.name, attr.value);
+				});
+
+				// Copy inline script content
+				if (oldScript.textContent) {
+					newScript.textContent = oldScript.textContent;
+				}
+
+				// Replace old script with new one to execute it
+				oldScript.parentNode?.replaceChild(newScript, oldScript);
 			});
 
-			// Copy inline script content
-			if (oldScript.textContent) {
-				newScript.textContent = oldScript.textContent;
+			// Cleanup function
+			return () => {
+				if (containerRef.current) {
+					const scripts = containerRef.current.querySelectorAll('script');
+					scripts.forEach(script => script.remove());
+				}
+			};
+		} else if (useSandbox && iframeRef.current) {
+			// Sandbox mode: use iframe for external scripts
+			const handleLoad = () => {
+				if (iframeRef.current?.contentWindow) {
+					iframeRef.current.contentWindow.postMessage({
+						type: 'setHTML',
+						html: props.props.html
+					}, '*');
+				}
+			};
+
+			if (iframeRef.current.contentWindow) {
+				handleLoad();
+			} else {
+				iframeRef.current.addEventListener('load', handleLoad);
 			}
 
-			// Replace old script with new one to execute it
-			oldScript.parentNode?.replaceChild(newScript, oldScript);
-		});
-
-		// Cleanup function
-		return () => {
-			// Remove scripts on unmount to prevent memory leaks
-			if (containerRef.current) {
-				const scripts = containerRef.current.querySelectorAll('script');
-				scripts.forEach(script => script.remove());
-			}
-		};
-	}, [props.props.html]);
+			return () => {
+				if (iframeRef.current) {
+					iframeRef.current.removeEventListener('load', handleLoad);
+				}
+			};
+		}
+	}, [props.props.html, useSandbox]);
 
 	return (
 		<Panel {...props.theme} scrolling={false}>
-			<div ref={containerRef} />
+			{useSandbox ? (
+				<iframe
+					ref={iframeRef}
+					src="sandbox.html"
+					style={{ width: '100%', height: '100%', border: 'none' }}
+					sandbox="allow-scripts allow-same-origin"
+				/>
+			) : (
+				<div ref={containerRef} />
+			)}
 		</Panel>);
 }
 

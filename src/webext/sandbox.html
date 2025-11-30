@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div id="content"></div>
+    <script>
+        // Listen for messages from parent
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'setHTML') {
+                const contentDiv = document.getElementById('content');
+                contentDiv.innerHTML = event.data.html;
+
+                // Execute scripts
+                const scripts = contentDiv.querySelectorAll('script');
+                scripts.forEach((oldScript) => {
+                    const newScript = document.createElement('script');
+
+                    // Copy attributes
+                    Array.from(oldScript.attributes).forEach(attr => {
+                        newScript.setAttribute(attr.name, attr.value);
+                    });
+
+                    // Copy inline script content
+                    if (oldScript.textContent) {
+                        newScript.textContent = oldScript.textContent;
+                    }
+
+                    // Replace old script with new one to execute it
+                    oldScript.parentNode?.replaceChild(newScript, oldScript);
+                });
+            }
+        });
+
+        // Notify parent that sandbox is ready
+        window.parent.postMessage({ type: 'sandboxReady' }, '*');
+    </script>
+</body>
+</html>
