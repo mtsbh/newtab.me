@@ -39,17 +39,11 @@ interface HTMLProps {
 function HTML(props: WidgetProps<HTMLProps>) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const iframeRef = useRef<HTMLIFrameElement>(null);
-	const [useSandbox, setUseSandbox] = useState(false);
 
-	useEffect(() => {
-		// Check if HTML contains external scripts (requires sandbox)
-		const hasExternalScript = /<script[^>]*src=["']https?:\/\//.test(props.props.html);
-		console.log('HTML Widget: External script detected?', hasExternalScript, 'Will use sandbox:', hasExternalScript);
-		if (hasExternalScript) {
-			console.log('HTML Widget: Switching to sandbox mode for external scripts');
-		}
-		setUseSandbox(hasExternalScript);
-	}, [props.props.html]);
+	// Check if HTML contains external scripts (requires sandbox)
+	// Calculate during render, not in useEffect, to ensure it's synchronous
+	const useSandbox = /<script[^>]*src=["']https?:\/\//.test(props.props.html);
+	console.log('HTML Widget: External script detected?', useSandbox, 'Will use sandbox:', useSandbox);
 
 	useEffect(() => {
 		if (!useSandbox && containerRef.current) {
