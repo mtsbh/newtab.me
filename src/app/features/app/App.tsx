@@ -95,6 +95,13 @@ export default function App() {
 			// Create a copy of the widgets array to avoid shared references
 			widgetManager.widgets = [...(activeWorkspace.widgets || [])];
 
+			// CRITICAL: Update id_counter to prevent duplicate IDs
+			// This matches what WidgetManager.load() does
+			(widgetManager as any).id_counter = widgetManager.widgets.reduce(
+				(max, widget) => Math.max(widget.id, max),
+				0
+			);
+
 			// Initialize widgets (same as WidgetManager.load() does)
 			for (const widget of widgetManager.widgets) {
 				// This calls afterLoad logic
@@ -158,7 +165,6 @@ export default function App() {
 	const [isLockedRaw, setIsLocked] = useStorage<boolean>("locked", false);
 	const [onboardingIsOpen, setOnboardingIsOpen] = useState<boolean | undefined>(undefined);
 	const isLocked = onboardingIsOpen === true || (isLockedRaw ?? false);
-	const isLocked = onboardingIsOpen !== false || (isLockedRaw ?? false);
 
 	const loaded = workspacesLoaded && widgetsLoaded && localeMessages != null;
 

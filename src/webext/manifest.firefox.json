@@ -18,6 +18,9 @@
 	"chrome_settings_overrides": {
 		"homepage": "app/webext.html"
 	},
+	"sandbox": {
+		"pages": ["sandbox.html"]
+	},
 	"browser_specific_settings": {
 		"gecko": {
 			"id": "{166411f2-402a-4bca-a3da-38b795ec8007}",

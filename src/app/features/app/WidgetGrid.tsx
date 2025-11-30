@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useState, useMemo } from "react";
+import React, { CSSProperties, useEffect, useState, useMemo, useRef } from "react";
 import { WidgetContainer } from "./WidgetContainer";
 import { WidgetManager } from "app/WidgetManager";
 import { WidgetTypes } from "app/widgets";
@@ -93,11 +93,30 @@ export default function WidgetGrid(props: WidgetGridProps) {
 		widgetManager.removeWidget(id);
 	}
 
+	// Track which widgets have had their positions saved
+	const savedWidgetIdsRef = useRef<Set<number>>(new Set());
 
 	// Memoize layout processing to avoid recreating on every render
 	const { sortedWidgets, layout } = useMemo(() => {
+		// Get widgets that need positioning before layouter runs
+		const widgetsNeedingPosition = widgetManager.widgets.filter(w => !w.position);
+
 		const layouter = new WidgetLayouter(new Vector2(gridColumns, maxRows ?? 0));
-		layouter.resolveAll(widgetManager.widgets);
+		const wasRepositioned = layouter.resolveAll(widgetManager.widgets);
+
+		// Check if any NEW widgets got positions and need to be saved
+		const newlyPositionedWidgets = widgetsNeedingPosition.filter(
+			w => w.position && !savedWidgetIdsRef.current.has(w.id)
+		);
+
+		if (newlyPositionedWidgets.length > 0) {
+			// Mark these widgets as saved
+			newlyPositionedWidgets.forEach(w => savedWidgetIdsRef.current.add(w.id));
+			// Save asynchronously to avoid render cycle issues
+			setTimeout(() => {
+				widgetManager.save();
+			}, 0);
+		}
 
 		// Sort widgets to allow predictable focus order
 		const sorted = [...widgetManager.widgets].sort((a, b) =>
@@ -113,7 +132,7 @@ export default function WidgetGrid(props: WidgetGridProps) {
 		}));
 
 		return { sortedWidgets: sorted, layout };
-	}, [widgetManager.widgets, gridColumns, maxRows]);
+	}, [widgetManager.widgets, gridColumns, maxRows, props.isLocked]);
 
 	// Memoize widgets to prevent unnecessary re-renders
 	const widgets = useMemo(() => sortedWidgets.map(widget => {
@@ -177,7 +196,9 @@ export default function WidgetGrid(props: WidgetGridProps) {
 
 						className={mergeClasses(gridClassNames, props.fullPage && "grid-full-page")}
 						style={gridStyle}
-						isDraggable={!props.isLocked} isResizable={!props.isLocked}
+						isDraggable={!props.isLocked}
+						isResizable={!props.isLocked}
+						resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
 						layout={layout} onLayoutChange={onLayoutChange}
 						cols={gridColumns} rowHeight={cellSize}
 						margin={[cellSpacing, cellSpacing]}

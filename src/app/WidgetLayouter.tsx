@@ -42,7 +42,7 @@ export default class WidgetLayouter {
 		if (!widget.position ||
 				this.hasWidget(new Rect2(widget.position, widget.size))) {
 			if (widget.position) {
-				console.log(`Collision detected for ${widget.type} ${widget.id}, repositioning`);
+				console.warn(`Widget collision detected for ${widget.type} #${widget.id}, repositioning`);
 				widget.position = undefined;
 			}
 
@@ -51,6 +51,7 @@ export default class WidgetLayouter {
 			while (!widget.position) {
 				widget.position = this.findFreePosition(widget.size);
 				if (!widget.position) {
+					console.warn(`No free position found for widget ${widget.type} #${widget.id}, shrinking`);
 					if (widget.size.x > widget.size.y) {
 						widget.size = widget.size.add(new Vector2(-1, 0));
 					} else {

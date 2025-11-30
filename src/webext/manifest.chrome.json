@@ -16,6 +16,9 @@
 	"chrome_url_overrides" : {
 		"newtab": "app/webext.html"
 	},
+	"sandbox": {
+		"pages": ["sandbox.html"]
+	},
 	"permissions": [
 		"storage",
 		"search",

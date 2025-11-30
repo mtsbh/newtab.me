@@ -20,13 +20,25 @@ if (target !== "firefox" && target !== "chrome" && target !== "edge") {
 
 const configFile = path.resolve(__dirname, "config.json");
 function getConfig() {
-	const config = JSON.parse(fs.readFileSync(configFile).toString());
+	let config;
+	try {
+		config = JSON.parse(fs.readFileSync(configFile).toString());
+	} catch (error) {
+		console.warn("config.json not found, using config.example.json");
+		config = JSON.parse(fs.readFileSync(path.resolve(__dirname, "config.example.json")).toString());
+	}
+
 	config.SENTRY_DSN = process.env.SENTRY_DSN ?? config.SENTRY_DSN;
+
+	// Convert empty strings to undefined to prevent Sentry warnings
+	if (!config.SENTRY_DSN || config.SENTRY_DSN.trim() === "") {
+		config.SENTRY_DSN = undefined;
+	}
 
 	return {
 		API_URL: JSON.stringify(config.API_URL),
 		PROXY_URL: JSON.stringify(config.PROXY_URL),
-		SENTRY_DSN: JSON.stringify(config.SENTRY_DSN),
+		SENTRY_DSN: config.SENTRY_DSN ? JSON.stringify(config.SENTRY_DSN) : undefined,
 	};
 }
 
