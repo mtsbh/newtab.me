@@ -18,8 +18,13 @@ export function setSentryEnabled(v: boolean) {
 
 
 export function initSentry() {
+	// Only initialize Sentry if DSN is properly configured
+	if (!config.SENTRY_DSN || (typeof config.SENTRY_DSN === "string" && config.SENTRY_DSN.trim() === "")) {
+		return;
+	}
+
 	Sentry.init({
-		enabled: config.SENTRY_DSN !== undefined && getIsSentryEnabled(),
+		enabled: getIsSentryEnabled(),
 		dsn: config.SENTRY_DSN,
 		integrations: [
 			Sentry.browserTracingIntegration({
