@@ -2,7 +2,7 @@ import Panel from 'app/components/Panel';
 import { type } from 'app/utils/Schema';
 import { Vector2 } from 'app/utils/Vector2';
 import { WidgetProps, WidgetType } from 'app/Widget';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { defineMessages } from 'react-intl';
 
 
