@@ -67,7 +67,7 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 				onClick={() => setIsOpen(!isOpen)}
 				title={`Switch workspace (Ctrl+Shift+W)\nCurrent: ${activeWorkspace?.name || "Main"}`}
 			>
-				<i className="fas fa-layer-group"></i>
+				<i className="fas fa-grip-horizontal"></i>
 				<span className="workspace-current-name">{activeWorkspace?.name || "Main"}</span>
 				<span className="workspace-count">{props.workspaces.length}</span>
 				<i className={mergeClasses("fas fa-chevron-down workspace-chevron", isOpen && "rotate")}></i>
@@ -79,7 +79,7 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 					<div className={mergeClasses("workspace-panel", !props.isLocked && "unlocked")}>
 						<div className="workspace-panel-header">
 							<h3>
-								<i className="fas fa-layer-group"></i>
+								<i className="fas fa-grip-horizontal"></i>
 								Workspaces
 							</h3>
 							{!props.isLocked && (
@@ -124,11 +124,11 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 												}}
 												title={workspace.name}
 											>
-												<i className="fas fa-folder workspace-tab-icon"></i>
+												<i className="fas fa-window-restore workspace-tab-icon"></i>
 												<span className="workspace-tab-name">{workspace.name}</span>
 												{workspace.id === props.activeWorkspaceId && (
 													<span className="workspace-active-badge">
-														<i className="fas fa-check"></i>
+														<i className="fas fa-circle-check"></i>
 													</span>
 												)}
 											</button>
@@ -139,7 +139,7 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 														onClick={(e) => handleStartRename(workspace, e)}
 														title="Rename workspace"
 													>
-														<i className="fas fa-edit"></i>
+														<i className="fas fa-pen-to-square"></i>
 													</button>
 													{props.workspaces.length > 1 && (
 														<button
@@ -147,7 +147,7 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 															onClick={(e) => handleDeleteWorkspace(workspace, e)}
 															title="Delete workspace"
 														>
-															<i className="fas fa-trash"></i>
+															<i className="fas fa-trash-can"></i>
 														</button>
 													)}
 												</div>
@@ -166,7 +166,7 @@ export default function WorkspaceSwitcher(props: WorkspaceSwitcherProps) {
 								}}
 								title="Create new workspace"
 							>
-								<i className="fas fa-plus-circle"></i>
+								<i className="fas fa-circle-plus"></i>
 								<span>New Workspace</span>
 							</button>
 						)}
