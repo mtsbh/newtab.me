@@ -93,14 +93,16 @@ export default function WidgetGrid(props: WidgetGridProps) {
 		widgetManager.removeWidget(id);
 	}
 
+	// Check if any widgets need positioning (new widgets without positions)
+	const needsPositioning = widgetManager.widgets.some(widget => !widget.position);
 
 	// Memoize layout processing to avoid recreating on every render
-	const { sortedWidgets, layout } = useMemo(() => {
+	const { sortedWidgets, layout, wasRepositioned } = useMemo(() => {
 		console.log('WidgetGrid: Computing layout for', widgetManager.widgets.length, 'widgets');
 		console.log('WidgetGrid: isLocked =', props.isLocked);
 
 		const layouter = new WidgetLayouter(new Vector2(gridColumns, maxRows ?? 0));
-		layouter.resolveAll(widgetManager.widgets);
+		const wasRepositioned = layouter.resolveAll(widgetManager.widgets);
 
 		// Sort widgets to allow predictable focus order
 		const sorted = [...widgetManager.widgets].sort((a, b) =>
@@ -115,8 +117,16 @@ export default function WidgetGrid(props: WidgetGridProps) {
 			h: widget.size.y,
 		}));
 
-		return { sortedWidgets: sorted, layout };
+		return { sortedWidgets: sorted, layout, wasRepositioned };
 	}, [widgetManager.widgets, gridColumns, maxRows, props.isLocked]);
+
+	// Save positions after layouter resolves them if widgets were repositioned
+	useEffect(() => {
+		if (needsPositioning || wasRepositioned) {
+			console.log('WidgetGrid: Saving positions after repositioning');
+			widgetManager.save();
+		}
+	}, [needsPositioning, wasRepositioned, widgetManager]);
 
 	// Memoize widgets to prevent unnecessary re-renders
 	const widgets = useMemo(() => sortedWidgets.map(widget => {
