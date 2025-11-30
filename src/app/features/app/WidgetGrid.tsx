@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useState, useMemo } from "react";
+import React, { CSSProperties, useEffect, useState, useMemo, useRef } from "react";
 import { WidgetContainer } from "./WidgetContainer";
 import { WidgetManager } from "app/WidgetManager";
 import { WidgetTypes } from "app/widgets";
@@ -93,11 +93,12 @@ export default function WidgetGrid(props: WidgetGridProps) {
 		widgetManager.removeWidget(id);
 	}
 
-	// Check if any widgets need positioning (new widgets without positions)
-	const needsPositioning = widgetManager.widgets.some(widget => !widget.position);
+	// Track if we need to save after layout changes
+	const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+	const lastWidgetCountRef = useRef(0);
 
 	// Memoize layout processing to avoid recreating on every render
-	const { sortedWidgets, layout, wasRepositioned } = useMemo(() => {
+	const { sortedWidgets, layout } = useMemo(() => {
 		console.log('WidgetGrid: Computing layout for', widgetManager.widgets.length, 'widgets');
 		console.log('WidgetGrid: isLocked =', props.isLocked);
 
@@ -117,16 +118,20 @@ export default function WidgetGrid(props: WidgetGridProps) {
 			h: widget.size.y,
 		}));
 
-		return { sortedWidgets: sorted, layout, wasRepositioned };
-	}, [widgetManager.widgets, gridColumns, maxRows, props.isLocked]);
-
-	// Save positions after layouter resolves them if widgets were repositioned
-	useEffect(() => {
-		if (needsPositioning || wasRepositioned) {
-			console.log('WidgetGrid: Saving positions after repositioning');
-			widgetManager.save();
+		// Save positions after repositioning, but only once per widget count change
+		if (wasRepositioned && widgetManager.widgets.length !== lastWidgetCountRef.current) {
+			lastWidgetCountRef.current = widgetManager.widgets.length;
+			if (saveTimeoutRef.current) {
+				clearTimeout(saveTimeoutRef.current);
+			}
+			saveTimeoutRef.current = setTimeout(() => {
+				console.log('WidgetGrid: Saving positions after repositioning');
+				widgetManager.save();
+			}, 100);
 		}
-	}, [needsPositioning, wasRepositioned, widgetManager]);
+
+		return { sortedWidgets: sorted, layout };
+	}, [widgetManager.widgets, gridColumns, maxRows, props.isLocked]);
 
 	// Memoize widgets to prevent unnecessary re-renders
 	const widgets = useMemo(() => sortedWidgets.map(widget => {
