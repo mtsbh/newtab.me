@@ -80,25 +80,40 @@ function HTML(props: WidgetProps<HTMLProps>) {
 		} else if (useSandbox && iframeRef.current) {
 			// Sandbox mode: use iframe for external scripts
 			console.log('HTML Widget: Using SANDBOX iframe for external scripts');
-			const handleLoad = () => {
-				if (iframeRef.current?.contentWindow) {
-					iframeRef.current.contentWindow.postMessage({
+			const iframe = iframeRef.current;
+
+			const sendHTML = () => {
+				if (iframe.contentWindow) {
+					console.log('HTML Widget: Sending HTML to sandbox');
+					iframe.contentWindow.postMessage({
 						type: 'setHTML',
 						html: props.props.html
 					}, '*');
 				}
 			};
 
-			if (iframeRef.current.contentWindow) {
-				handleLoad();
-			} else {
-				iframeRef.current.addEventListener('load', handleLoad);
-			}
+			const handleMessage = (event: MessageEvent) => {
+				if (event.data && event.data.type === 'sandboxReady') {
+					console.log('HTML Widget: Sandbox ready, sending HTML');
+					sendHTML();
+				}
+			};
+
+			// Listen for sandbox ready message
+			window.addEventListener('message', handleMessage);
+
+			// Also listen for load event as a fallback
+			const handleLoad = () => {
+				console.log('HTML Widget: Sandbox loaded');
+				// Give the sandbox script time to initialize
+				setTimeout(sendHTML, 100);
+			};
+
+			iframe.addEventListener('load', handleLoad);
 
 			return () => {
-				if (iframeRef.current) {
-					iframeRef.current.removeEventListener('load', handleLoad);
-				}
+				window.removeEventListener('message', handleMessage);
+				iframe.removeEventListener('load', handleLoad);
 			};
 		}
 	}, [props.props.html, useSandbox]);
