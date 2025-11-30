@@ -96,6 +96,9 @@ export default function WidgetGrid(props: WidgetGridProps) {
 
 	// Memoize layout processing to avoid recreating on every render
 	const { sortedWidgets, layout } = useMemo(() => {
+		console.log('WidgetGrid: Computing layout for', widgetManager.widgets.length, 'widgets');
+		console.log('WidgetGrid: isLocked =', props.isLocked);
+
 		const layouter = new WidgetLayouter(new Vector2(gridColumns, maxRows ?? 0));
 		layouter.resolveAll(widgetManager.widgets);
 
@@ -113,7 +116,7 @@ export default function WidgetGrid(props: WidgetGridProps) {
 		}));
 
 		return { sortedWidgets: sorted, layout };
-	}, [widgetManager.widgets, gridColumns, maxRows]);
+	}, [widgetManager.widgets, gridColumns, maxRows, props.isLocked]);
 
 	// Memoize widgets to prevent unnecessary re-renders
 	const widgets = useMemo(() => sortedWidgets.map(widget => {
