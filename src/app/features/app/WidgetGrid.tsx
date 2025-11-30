@@ -177,7 +177,9 @@ export default function WidgetGrid(props: WidgetGridProps) {
 
 						className={mergeClasses(gridClassNames, props.fullPage && "grid-full-page")}
 						style={gridStyle}
-						isDraggable={!props.isLocked} isResizable={!props.isLocked}
+						isDraggable={!props.isLocked}
+						isResizable={!props.isLocked}
+						resizeHandles={['s', 'w', 'e', 'n', 'sw', 'nw', 'se', 'ne']}
 						layout={layout} onLayoutChange={onLayoutChange}
 						cols={gridColumns} rowHeight={cellSize}
 						margin={[cellSpacing, cellSpacing]}
