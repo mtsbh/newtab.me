@@ -93,17 +93,13 @@ export default function WidgetGrid(props: WidgetGridProps) {
 		widgetManager.removeWidget(id);
 	}
 
-	// Track if we need to save after layout changes
-	const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-	const lastWidgetCountRef = useRef(0);
-
 	// Memoize layout processing to avoid recreating on every render
 	const { sortedWidgets, layout } = useMemo(() => {
 		console.log('WidgetGrid: Computing layout for', widgetManager.widgets.length, 'widgets');
 		console.log('WidgetGrid: isLocked =', props.isLocked);
 
 		const layouter = new WidgetLayouter(new Vector2(gridColumns, maxRows ?? 0));
-		const wasRepositioned = layouter.resolveAll(widgetManager.widgets);
+		layouter.resolveAll(widgetManager.widgets);
 
 		// Sort widgets to allow predictable focus order
 		const sorted = [...widgetManager.widgets].sort((a, b) =>
@@ -117,18 +113,6 @@ export default function WidgetGrid(props: WidgetGridProps) {
 			w: widget.size.x,
 			h: widget.size.y,
 		}));
-
-		// Save positions after repositioning, but only once per widget count change
-		if (wasRepositioned && widgetManager.widgets.length !== lastWidgetCountRef.current) {
-			lastWidgetCountRef.current = widgetManager.widgets.length;
-			if (saveTimeoutRef.current) {
-				clearTimeout(saveTimeoutRef.current);
-			}
-			saveTimeoutRef.current = setTimeout(() => {
-				console.log('WidgetGrid: Saving positions after repositioning');
-				widgetManager.save();
-			}, 100);
-		}
 
 		return { sortedWidgets: sorted, layout };
 	}, [widgetManager.widgets, gridColumns, maxRows, props.isLocked]);
