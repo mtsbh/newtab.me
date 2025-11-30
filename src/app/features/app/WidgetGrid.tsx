@@ -93,13 +93,36 @@ export default function WidgetGrid(props: WidgetGridProps) {
 		widgetManager.removeWidget(id);
 	}
 
+	// Track which widgets have had their positions saved
+	const savedWidgetIdsRef = useRef<Set<number>>(new Set());
+
 	// Memoize layout processing to avoid recreating on every render
 	const { sortedWidgets, layout } = useMemo(() => {
 		console.log('WidgetGrid: Computing layout for', widgetManager.widgets.length, 'widgets');
 		console.log('WidgetGrid: isLocked =', props.isLocked);
 
+		// Get widgets that need positioning before layouter runs
+		const widgetsNeedingPosition = widgetManager.widgets.filter(w => !w.position);
+		console.log('WidgetGrid: Widgets needing position:', widgetsNeedingPosition.map(w => `${w.type}#${w.id}`));
+
 		const layouter = new WidgetLayouter(new Vector2(gridColumns, maxRows ?? 0));
-		layouter.resolveAll(widgetManager.widgets);
+		const wasRepositioned = layouter.resolveAll(widgetManager.widgets);
+
+		// Check if any NEW widgets got positions and need to be saved
+		const newlyPositionedWidgets = widgetsNeedingPosition.filter(
+			w => w.position && !savedWidgetIdsRef.current.has(w.id)
+		);
+
+		if (newlyPositionedWidgets.length > 0) {
+			console.log('WidgetGrid: Newly positioned widgets:', newlyPositionedWidgets.map(w => `${w.type}#${w.id} at ${w.position}`));
+			// Mark these widgets as saved
+			newlyPositionedWidgets.forEach(w => savedWidgetIdsRef.current.add(w.id));
+			// Save asynchronously to avoid render cycle issues
+			setTimeout(() => {
+				console.log('WidgetGrid: Saving positions for newly positioned widgets');
+				widgetManager.save();
+			}, 0);
+		}
 
 		// Sort widgets to allow predictable focus order
 		const sorted = [...widgetManager.widgets].sort((a, b) =>
