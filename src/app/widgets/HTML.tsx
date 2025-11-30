@@ -108,7 +108,7 @@ function HTML(props: WidgetProps<HTMLProps>) {
 			{useSandbox ? (
 				<iframe
 					ref={iframeRef}
-					src="sandbox.html"
+					src="../sandbox.html"
 					style={{ width: '100%', height: '100%', border: 'none' }}
 					sandbox="allow-scripts allow-same-origin"
 				/>
