@@ -44,12 +44,17 @@ function HTML(props: WidgetProps<HTMLProps>) {
 	useEffect(() => {
 		// Check if HTML contains external scripts (requires sandbox)
 		const hasExternalScript = /<script[^>]*src=["']https?:\/\//.test(props.props.html);
+		console.log('HTML Widget: External script detected?', hasExternalScript, 'Will use sandbox:', hasExternalScript);
+		if (hasExternalScript) {
+			console.log('HTML Widget: Switching to sandbox mode for external scripts');
+		}
 		setUseSandbox(hasExternalScript);
 	}, [props.props.html]);
 
 	useEffect(() => {
 		if (!useSandbox && containerRef.current) {
 			// Standard mode: inject HTML directly
+			console.log('HTML Widget: Using DIRECT injection (no sandbox)');
 			containerRef.current.innerHTML = props.props.html;
 
 			// Execute scripts manually to enable JavaScript
@@ -80,6 +85,7 @@ function HTML(props: WidgetProps<HTMLProps>) {
 			};
 		} else if (useSandbox && iframeRef.current) {
 			// Sandbox mode: use iframe for external scripts
+			console.log('HTML Widget: Using SANDBOX iframe for external scripts');
 			const handleLoad = () => {
 				if (iframeRef.current?.contentWindow) {
 					iframeRef.current.contentWindow.postMessage({
