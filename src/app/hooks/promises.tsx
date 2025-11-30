@@ -21,7 +21,8 @@ export function useRunPromise<T>(func: () => Promise<T>,
 			}
 		}).catch((reason) => {
 			// Only log non-UserError exceptions (UserErrors are expected user-facing errors)
-			if (!(reason instanceof UserError)) {
+			// Also skip logging null/undefined (often used for intentional cancellations)
+			if (!(reason instanceof UserError) && reason != null) {
 				console.error(reason);
 			}
 			if (!cancelled) {
