@@ -159,6 +159,9 @@ export default function App() {
 	const [onboardingIsOpen, setOnboardingIsOpen] = useState<boolean | undefined>(undefined);
 	const isLocked = onboardingIsOpen === true || (isLockedRaw ?? false);
 
+	// Debug: Log lock state
+	console.log('Lock state:', { isLockedRaw, onboardingIsOpen, isLocked });
+
 	const loaded = workspacesLoaded && widgetsLoaded && localeMessages != null;
 
 	useEffect(() => {
