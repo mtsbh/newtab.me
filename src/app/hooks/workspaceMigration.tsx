@@ -32,8 +32,13 @@ export async function migrateToWorkspaces(): Promise<boolean> {
 	// Create default workspace with existing data
 	const defaultWorkspace = createWorkspace("Main");
 	defaultWorkspace.widgets = widgets || [];
-	defaultWorkspace.background = background ?? undefined;
-	defaultWorkspace.gridSettings = gridSettings ?? undefined;
+	// Only override default background if migration data exists
+	if (background) {
+		defaultWorkspace.background = background;
+	}
+	if (gridSettings) {
+		defaultWorkspace.gridSettings = gridSettings;
+	}
 
 	// Save to new workspace system
 	await storage.set(WORKSPACES_KEY, [defaultWorkspace]);

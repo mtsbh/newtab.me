@@ -54,9 +54,10 @@ function createDebugData() {
 
 
 async function tryGetSubTree(id: string): Promise<browser.bookmarks.BookmarkTreeNode | null> {
-	if (app_version.is_debug && (browser as any).is_ui_test == undefined) {
-		return createDebugData();
-	}
+	// Debug data disabled - use real bookmarks
+	// if (app_version.is_debug && (browser as any).is_ui_test == undefined) {
+	// 	return createDebugData();
+	// }
 
 	try {
 		const toolbar_subtree = await browser.bookmarks.getSubTree(id);
