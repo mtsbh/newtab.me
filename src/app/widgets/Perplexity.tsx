@@ -50,11 +50,8 @@ function Perplexity(props: WidgetProps<PerplexityProps>) {
 
 	return (
 		<Panel {...props.theme} flush={true}>
-			<form onSubmit={onSubmit} style={{ position: 'relative' }}>
-				<span key={directURL ?? "icon"} className="icon" style={{
-					color: '#20808d',
-					fontSize: '1.2em'
-				}}>
+			<form onSubmit={onSubmit}>
+				<span key={directURL ?? "icon"} className="icon">
 					<i className={directURL !== null
 						? "fas fa-globe-europe"
 						: "fas fa-brain"} />

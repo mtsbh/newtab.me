@@ -195,7 +195,7 @@
 	}
 }
 
-.widget-search {
+.widget-search, .widget-perplexity {
 	form {
 		display: flex;
 		flex-direction: row;
@@ -212,7 +212,7 @@
 	}
 }
 
-.widget-search input, .widget-search form, .widget-notes textarea {
+.widget-search input, .widget-search form, .widget-perplexity input, .widget-perplexity form, .widget-notes textarea {
 	width: 100%;
 	height: 100%;
 	box-sizing: border-box;
