@@ -26,6 +26,7 @@ import { createContext } from "react";
 import { Workspace } from "app/Workspace";
 import { Widget } from "app/Widget";
 import deepCopy from "app/utils/deepcopy";
+import { getBackgroundProvider } from "../backgrounds/providers";
 
 
 export interface WorkspaceActions {
@@ -138,7 +139,12 @@ export default function App() {
 	}, [widgetManager, activeWorkspaceId, workspacesLoaded, updateWorkspaceWidgets]);
 
 	// Workspace-specific background and grid settings
-	const background = activeWorkspace?.background;
+	// Provide fallback default background if undefined
+	const background = activeWorkspace?.background || {
+		mode: "Curated",
+		values: { ...getBackgroundProvider<any>("Curated")!.defaultValues },
+	} as BackgroundConfig;
+
 	const setBackground = useCallback((newBackground: BackgroundConfig) => {
 		if (activeWorkspaceId) {
 			updateWorkspaceBackground(activeWorkspaceId, newBackground);
@@ -271,7 +277,7 @@ export default function App() {
 								<SettingsDialog
 									isOpen={settingsIsOpen}
 									onClose={() => setSettingsOpen(false)}
-									background={background!} setBackground={setBackground}
+									background={background} setBackground={setBackground}
 									theme={theme} setTheme={setTheme}
 									locale={locale ?? "en"} setLocale={setLocale}
 									showBookmarksBar={showBookmarksBar ?? false} setShowBookmarksBar={setShowBookmarksBar}
