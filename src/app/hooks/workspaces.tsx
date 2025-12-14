@@ -27,26 +27,31 @@ export function useWorkspaces() {
 			const storedActiveWorkspaceId = await storage.get<string>(ACTIVE_WORKSPACE_KEY);
 
 			if (storedWorkspaces && storedWorkspaces.length > 0) {
-				setWorkspacesState(storedWorkspaces);
-
 				// Use stored active workspace if it exists and is valid
 				// Otherwise default to first workspace
 				const activeId = storedActiveWorkspaceId && storedWorkspaces.some(w => w.id === storedActiveWorkspaceId)
 					? storedActiveWorkspaceId
 					: storedWorkspaces[0].id;
 
+				// Batch ALL state updates together before any async operations
+				// This prevents a flash where components render with incomplete state
 				setActiveWorkspaceIdState(activeId);
-				// Ensure active workspace is persisted
-				await storage.set(ACTIVE_WORKSPACE_KEY, activeId);
+				setWorkspacesState(storedWorkspaces);
+				setLoaded(true);
+
+				// Persist active workspace (async, happens after render)
+				storage.set(ACTIVE_WORKSPACE_KEY, activeId);
 			} else {
 				// Create default workspace (shouldn't happen after migration)
 				const defaultWorkspace = createWorkspace("Main");
-				setWorkspacesState([defaultWorkspace]);
 				setActiveWorkspaceIdState(defaultWorkspace.id);
-				await storage.set(WORKSPACES_KEY, [defaultWorkspace]);
-				await storage.set(ACTIVE_WORKSPACE_KEY, defaultWorkspace.id);
+				setWorkspacesState([defaultWorkspace]);
+				setLoaded(true);
+
+				// Persist to storage (async, happens after render)
+				storage.set(WORKSPACES_KEY, [defaultWorkspace]);
+				storage.set(ACTIVE_WORKSPACE_KEY, defaultWorkspace.id);
 			}
-			setLoaded(true);
 		};
 		load();
 	}, []);
