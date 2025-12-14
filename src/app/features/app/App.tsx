@@ -267,7 +267,7 @@ export default function App() {
 								typeof browser !== "undefined" && (
 								<BookmarksTopBar onHide={() => setShowBookmarksBar(false)} />)}
 							<Sentry.ErrorBoundary fallback={<div id="background"></div>}>
-								{background && (
+								{workspacesLoaded && background && (
 									<Background background={background} setWidgetsHidden={setWidgetsHidden} />
 								)}
 							</Sentry.ErrorBoundary>
