@@ -122,6 +122,7 @@ function HTML(props: WidgetProps<HTMLProps>) {
 		<Panel {...props.theme} scrolling={false}>
 			{useSandbox ? (
 				<iframe
+					key={props.props.html}
 					ref={iframeRef}
 					src="../sandbox.html"
 					style={{ width: '100%', height: '100%', border: 'none' }}
