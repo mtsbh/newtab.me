@@ -19,6 +19,9 @@
 	"sandbox": {
 		"pages": ["sandbox.html"]
 	},
+	"content_security_policy": {
+		"sandbox": "sandbox allow-scripts allow-forms allow-popups allow-modals; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; child-src 'self' https:; frame-src 'self' https:;"
+	},
 	"permissions": [
 		"storage",
 		"search",
@@ -28,7 +31,7 @@
 		"bookmarks",
 		"topSites"
 	],
-	"optional_host_permissions": [
+	"host_permissions": [
 		"<all_urls>"
 	]
 }

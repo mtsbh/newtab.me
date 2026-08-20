@@ -82,17 +82,30 @@ function HTML(props: WidgetProps<HTMLProps>) {
 			console.log('HTML Widget: Using SANDBOX iframe for external scripts');
 			const iframe = iframeRef.current;
 
+			// The sandbox announces itself on load, and the iframe's load event is
+			// a fallback in case that message was missed. Only send once, or the
+			// HTML (and any scripts in it) is executed twice.
+			let sent = false;
+
 			const sendHTML = () => {
-				if (iframe.contentWindow) {
-					console.log('HTML Widget: Sending HTML to sandbox');
-					iframe.contentWindow.postMessage({
-						type: 'setHTML',
-						html: props.props.html
-					}, '*');
+				if (sent || !iframe.contentWindow) {
+					return;
 				}
+
+				sent = true;
+				console.log('HTML Widget: Sending HTML to sandbox');
+				iframe.contentWindow.postMessage({
+					type: 'setHTML',
+					html: props.props.html
+				}, '*');
 			};
 
 			const handleMessage = (event: MessageEvent) => {
+				// Ignore other HTML widgets' sandboxes
+				if (event.source !== iframe.contentWindow) {
+					return;
+				}
+
 				if (event.data && event.data.type === 'sandboxReady') {
 					console.log('HTML Widget: Sandbox ready, sending HTML');
 					sendHTML();
@@ -126,7 +139,7 @@ function HTML(props: WidgetProps<HTMLProps>) {
 					ref={iframeRef}
 					src="../sandbox.html"
 					style={{ width: '100%', height: '100%', border: 'none' }}
-					sandbox="allow-scripts allow-same-origin allow-popups allow-modals allow-forms"
+					sandbox="allow-scripts allow-popups allow-modals allow-forms"
 				/>
 			) : (
 				<div ref={containerRef} />
