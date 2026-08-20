@@ -173,6 +173,7 @@ const widget: WidgetType<LinkBoxProps> = {
 				links: type.array(linkSchema, messages.links),
 				openInNewTab: type.boolean(schemaMessages.openInNewTab),
 				enableCustomIcons: type.boolean(messages.enableCustomIcons),
+				useWebsiteIcons: type.boolean(schemaMessages.useWebsiteIcons),
 			};
 		}
 	},
