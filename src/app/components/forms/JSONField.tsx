@@ -4,7 +4,7 @@ import { FieldProps } from ".";
 
 export default function JSONField(props: FieldProps<any | any[]>) {
 	const [value, setValue] = useState<string>(JSON.stringify(props.value) ?? "");
-	useEffect(() => setValue(JSON.stringify(props.value)), [props.value]);
+	useEffect(() => setValue(JSON.stringify(props.value) ?? ""), [props.value]);
 
 	function handleBlur() {
 		props.onChange(JSON.parse(value));

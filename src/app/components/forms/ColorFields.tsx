@@ -4,7 +4,7 @@ import { FieldProps } from ".";
 
 export function ColorField(props: FieldProps<string>) {
 	const [value, setValue] = useState<string>(props.value ?? "");
-	useEffect(() => setValue(props.value), [props.value]);
+	useEffect(() => setValue(props.value ?? ""), [props.value]);
 
 	return (
 		<input type="color" name={props.name} value={value}
@@ -47,7 +47,7 @@ export function ColorPairField(props: FieldProps<ColorPair>) {
 		<>
 			<input type="color" className="mr-2" name={props.name + ""} value={value.one}
 				onChange={(e) => handleChange(e, 0)} onBlur={handleBlur} />
-			<input type="color" name={props.name + "-2"} value={props.value.two}
+			<input type="color" name={props.name + "-2"} value={value.two}
 				onChange={(e) => handleChange(e, 1)} onBlur={handleBlur} />
 		</>);
 }

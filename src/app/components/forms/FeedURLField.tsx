@@ -6,7 +6,7 @@ import { FieldProps } from ".";
 import RequestHostPermission from "app/components/RequestHostPermission";
 
 export default function FeedURLField(props: FieldProps<string>) {
-	const [value, setValue] = useState<string>(props.value);
+	const [value, setValue] = useState<string>(props.value ?? "");
 	const ref = useRef<HTMLInputElement>(null);
 
 	function handleBlurOrPermission() {

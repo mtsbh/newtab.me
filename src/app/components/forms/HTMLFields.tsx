@@ -3,7 +3,7 @@ import { FieldProps } from ".";
 
 export function TextField(props: FieldProps<string>) {
 	const [value, setValue] = useState<string>(props.value ?? "");
-	useEffect(() => setValue(props.value), [props.value]);
+	useEffect(() => setValue(props.value ?? ""), [props.value]);
 
 	return (
 		<input type="text" name={props.name} value={value}
@@ -35,7 +35,7 @@ export function DateField(props: FieldProps<Date>) {
 
 export function URLField(props: FieldProps<string>) {
 	const [value, setValue] = useState<string>(props.value ?? "");
-	useEffect(() => setValue(props.value), [props.value]);
+	useEffect(() => setValue(props.value ?? ""), [props.value]);
 
 	function handleBlur(e: FocusEvent<HTMLInputElement>) {
 		if (!e.target.checkValidity()) {
@@ -54,7 +54,7 @@ export function URLField(props: FieldProps<string>) {
 
 export function TextAreaField(props: FieldProps<string>) {
 	const [value, setValue] = useState<string>(props.value ?? "");
-	useEffect(() => setValue(props.value), [props.value]);
+	useEffect(() => setValue(props.value ?? ""), [props.value]);
 
 	return (
 		<textarea name={props.name} value={value}
