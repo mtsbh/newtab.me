@@ -402,6 +402,7 @@ const widget: WidgetType<FeedProps> = {
 				filters: type.unorderedArray(filterSchema, messages.filters, messages.filtersHint),
 				combineSources: type.boolean(messages.combineSources),
 				openInNewTab: type.boolean(schemaMessages.openInNewTab),
+				useWebsiteIcons: type.boolean(schemaMessages.useWebsiteIcons),
 				showImages: type.boolean(messages.showImages, messages.showImagesHint),
 			};
 		}

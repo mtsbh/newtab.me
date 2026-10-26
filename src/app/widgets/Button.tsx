@@ -86,11 +86,18 @@ const widget: WidgetType<ButtonProps> = {
 
 	async schema(widget) {
 		if (typeof browser === "undefined") {
-			return {
-				url: type.url(schemaMessages.url),
-				icon: type.url(schemaMessages.icon),
-				text: type.string(schemaMessages.text),
-			};
+			return widget.props.useWebsiteIcons
+				? {
+					url: type.url(schemaMessages.url),
+					text: type.string(schemaMessages.text),
+					useWebsiteIcons: type.boolean(schemaMessages.useWebsiteIcons),
+				}
+				: {
+					url: type.url(schemaMessages.url),
+					text: type.string(schemaMessages.text),
+					icon: type.url(schemaMessages.icon),
+					useWebsiteIcons: type.boolean(schemaMessages.useWebsiteIcons),
+				};
 		} else if (widget.props.useWebsiteIcons) {
 			return {
 				url: type.url(schemaMessages.url),

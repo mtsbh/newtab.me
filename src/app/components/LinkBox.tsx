@@ -134,7 +134,7 @@ export default function LinkBox(props: LinkBoxProps & { widgetTheme: WidgetTheme
 		return ret;
 	}, [props.links, props.limitItemsToAvoidScrolling, size, query]);
 
-	if (useWebsiteIcons && typeof browser !== "undefined") {
+	if (useWebsiteIcons) {
 		links
 			.filter(link => link.url.length > 0 && (link.icon == "" || link.icon == undefined))
 			.forEach(link => {

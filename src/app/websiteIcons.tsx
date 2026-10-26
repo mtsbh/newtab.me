@@ -7,7 +7,40 @@ import { firstPromise } from "./utils";
 interface CachedIcon {
 	url: string;
 	fetchedAt: Date;
+
+	/**
+	 * True if the icon came from a third-party favicon service, instead of
+	 * from the website itself. These are refetched more often, as the website
+	 * may start providing a better icon.
+	 */
+	isFallback?: boolean;
 }
+
+
+/**
+ * Whether we're running as a browser extension.
+ *
+ * The web version can't fetch icons from websites directly, as cross-origin
+ * requests are blocked by CORS. Extensions can, when granted host permissions.
+ */
+const IS_WEBEXT = typeof browser !== "undefined";
+
+const ONE_DAY_MS = 60 * 60 * 24 * 1000;
+const CACHE_MAX_AGE_MS = 7 * ONE_DAY_MS;
+const FALLBACK_CACHE_MAX_AGE_MS = ONE_DAY_MS;
+
+/**
+ * Third-party favicon services, used as a last resort.
+ *
+ * These are loaded as `<img>` sources rather than fetched, so they work
+ * without CORS or host permissions.
+ */
+const FALLBACK_ICON_SERVICES = [
+	(domain: string) => `https://icons.duckduckgo.com/ip3/${domain}.ico`,
+	(domain: string) => `https://www.google.com/s2/favicons?sz=64&domain=${encodeURIComponent(domain)}`,
+];
+
+const FALLBACK_TIMEOUT_MS = 5000;
 
 
 function getDomain(url: string): string {
@@ -106,6 +139,55 @@ async function fetchIconURL(url: string): Promise<string | undefined> {
 }
 
 
+/**
+ * Loads an image URL, resolving to the URL if it loaded successfully.
+ *
+ * Unlike fetch(), this isn't subject to CORS, as the image is never read.
+ */
+function loadImage(url: string): Promise<string> {
+	return new Promise((resolve, reject) => {
+		const image = new Image();
+
+		const timer = setTimeout(() => {
+			image.src = "";
+			reject(new Error("Timed out loading icon"));
+		}, FALLBACK_TIMEOUT_MS);
+
+		image.onload = () => {
+			clearTimeout(timer);
+			if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+				resolve(url);
+			} else {
+				reject(new Error("Empty icon"));
+			}
+		};
+
+		image.onerror = () => {
+			clearTimeout(timer);
+			reject(new Error("Failed to load icon"));
+		};
+
+		image.src = url;
+	});
+}
+
+
+/**
+ * Gets an icon URL from a third-party favicon service.
+ *
+ * Used as a last resort, as it requires sending the domain to a third-party.
+ */
+async function fetchFallbackIcon(url: string): Promise<string | undefined> {
+	const domain = getDomain(url);
+	if (domain == "" || domain == "localhost" || !domain.includes(".")) {
+		return undefined;
+	}
+
+	return await firstPromise(FALLBACK_ICON_SERVICES.map(
+		makeURL => () => loadImage(makeURL(domain))));
+}
+
+
 const SUBDOMAIN_REMOVAL = new Set([
 	"feeds", "rss", "feedrss", "feedsrss", "rssfeeds", "atom"]);
 
@@ -130,13 +212,15 @@ async function fetchIcon(url: string): Promise<string | undefined> {
 
 	const parentURL = getParentDomainIfWhitelisted(url)
 
+	// Requests to other websites are blocked by CORS on the web version,
+	// so don't bother making them.
 	const data = await firstPromise([
 		() => fetchTippyTops(url),
-		() => fetchIconURL(url),
-		url != rootURL.toString() && (() => fetchIconURL(rootURL.toString())),
+		IS_WEBEXT && (() => fetchIconURL(url)),
+		IS_WEBEXT && url != rootURL.toString() && (() => fetchIconURL(rootURL.toString())),
 		parentURL ? (() => fetchTippyTops(parentURL)) : undefined,
-		parentURL ? (() => fetchIconURL(parentURL)) : undefined,
-		() => fetchBinaryAsDataURL(new URL("/favicon.ico", url).toString(), validateIcon),
+		IS_WEBEXT && parentURL ? (() => fetchIconURL(parentURL)) : undefined,
+		IS_WEBEXT && (() => fetchBinaryAsDataURL(new URL("/favicon.ico", url).toString(), validateIcon)),
 	]);
 	if (data) {
 		await cacheStorage.set(key, {
@@ -144,6 +228,18 @@ async function fetchIcon(url: string): Promise<string | undefined> {
 			fetchedAt: new Date(),
 		});
 		return data;
+	}
+
+	// Last resort: a third-party favicon service. This is loaded as an image
+	// URL rather than a data URL, so that it works without CORS.
+	const fallback = await fetchFallbackIcon(parentURL ?? url);
+	if (fallback) {
+		await cacheStorage.set(key, {
+			url: fallback,
+			fetchedAt: new Date(),
+			isFallback: true,
+		});
+		return fallback;
 	}
 }
 
@@ -153,11 +249,14 @@ async function fetchIconCached(url: string): Promise<string | undefined> {
 	const value = await cacheStorage.get<CachedIcon>(key);
 	if (value) {
 		const now = new Date();
-		if (now.valueOf() > value.fetchedAt.valueOf() + 7*60*60*24*1000) {
+		const maxAge = value.isFallback
+			? FALLBACK_CACHE_MAX_AGE_MS
+			: CACHE_MAX_AGE_MS;
+		if (now.valueOf() > value.fetchedAt.valueOf() + maxAge) {
 			// Update cache in background
 			console.log("Website icon is stale, updating in the background")
 			cacheStorage.remove(key);
-			fetchIcon(url);
+			fetchIcon(url).catch(console.error);
 		}
 		return value.url;
 	}
